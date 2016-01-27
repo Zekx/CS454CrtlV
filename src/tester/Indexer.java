@@ -40,7 +40,7 @@ public class Indexer {
 	    		try{
 	    			BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
 	    			String fileName = file.getName();
-	    			URL url = file.toURI().toURL();
+	    			String url = file.toURI().toURL().toString();
 	    			
 	    			Date creationTime = format1.parse(attr.creationTime().toString().replace("Z", "").replace("T", " "));
 	    			String newcreationTime = format2.format(creationTime);
