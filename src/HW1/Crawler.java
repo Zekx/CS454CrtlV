@@ -36,55 +36,56 @@ public class Crawler {
 	private Set<String> visitedAlready = new HashSet<String>();
 	
 	public void urlCrawler(String url, int level, int levelSize, DBCollection db){
-		System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
-		try{
-			if(!url.replace(" ", "").isEmpty()){
-				Connection connection = Jsoup.connect(url);
-				Connection.Response resp = Jsoup.connect(url).timeout(100*1000).ignoreHttpErrors(true).followRedirects(true).execute();
-				Document doc = null;
-				
-				//Checks for a 200 code.
-				if(resp.statusCode() == 200){
-					doc = connection.get();
-				}
-				
-				if(doc != null){
-					Elements allLinks = doc.select("a[href]");
-					for(Element link : allLinks){
-						if(link != null){
-							this.goingToVisit.add(link.attr("abs:href"));
+		while(level <= 3){
+			System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
+
+			try{
+				if(!url.replace(" ", "").isEmpty()){
+					Connection connection = Jsoup.connect(url);
+					Connection.Response resp = Jsoup.connect(url).timeout(100*1000).ignoreHttpErrors(false).followRedirects(true).execute();
+					Document doc = null;
+
+					//Checks for a 200 code.
+					if(resp.statusCode() == 200){
+						doc = connection.get();
+					}
+
+					if(doc != null){
+						Elements allLinks = doc.select("a[href]");
+						for(Element link : allLinks){
+							if(link != null){
+								if(!this.visitedAlready.contains(link.attr("abs:href"))){
+									this.goingToVisit.add(link.attr("abs:href"));
+								}
+							}
 						}
 					}
 				}
+			}catch(Exception e){
+				e.printStackTrace();
 			}
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-		
-		//This page has fully been visited.
-		this.visitedAlready.add(url);
-		
-		//Recursively visits linked websites. The higher the number, the deeper the height.
-		if(level <= 3){
-			String nexturl = this.goingToVisit.remove(0);
+
+			//This page has fully been visited.
+			this.visitedAlready.add(url);
+
+			//Goes to the next linked websites. The higher the number, the deeper the height.
+			url = this.goingToVisit.remove(0);
 			levelSize = levelSize - 1;
-			
+
+			//Checks to see if the next tier is coming based on the current tier's total queue list size.
+			if(levelSize == 0){
+				level = level + 1;
+				levelSize = this.goingToVisit.size();
+			}
+
 			//If the following url has already been visited, then skip it.
-			while(this.visitedAlready.contains(nexturl)){
-				nexturl = this.goingToVisit.remove(0);
+			while(this.visitedAlready.contains(url)){
+				url = this.goingToVisit.remove(0);
 				levelSize = levelSize - 1;
 				if(levelSize <= 0){
 					levelSize = this.goingToVisit.size();
 					level = level + 1;
 				}
-			}
-			
-			//Determines the current tier and size of the tier. Finishes when the expected tier has past.
-			if(levelSize != 0){
-				urlCrawler(nexturl, level, levelSize, db);
-			}
-			else{
-				urlCrawler(nexturl, level + 1, this.goingToVisit.size(), db);
 			}
 		}
 	}
