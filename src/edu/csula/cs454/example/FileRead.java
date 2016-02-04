@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 /**
  * A simple file read example with simple file count
- *
+ * <p>
  * TODO: can you do a word count for this file?
  */
 public class FileRead {
@@ -19,15 +19,15 @@ public class FileRead {
         List<String> list = new ArrayList<>();
 
         try (
-            Stream<String> stream = Files.lines(
-                Paths.get(
-                    ClassLoader.getSystemResource("example/alice-in-the-wonderland.txt")
-                        .toURI()
+                Stream<String> stream = Files.lines(
+                        Paths.get(
+                                ClassLoader.getSystemResource("example/alice-in-the-wonderland.txt")
+                                        .toURI()
+                        )
                 )
-            )
         ) {
             list = stream
-                .collect(Collectors.toList());
+                    .collect(Collectors.toList());
 
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
