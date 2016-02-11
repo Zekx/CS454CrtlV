@@ -101,7 +101,7 @@ public class Crawler {
 
         //Connects to a URL. Goes up to 3 levels.
         //Begins with one url, Tier: 0, totalSize 1.
-        String u = "https://www.google.com/webhp?hl=en", d = "1";
+        String u = null, d = null;
 
        try{
             for(int i = 0; i < args.length; i++){
