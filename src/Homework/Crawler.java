@@ -1,11 +1,13 @@
 package Homework;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -29,10 +31,16 @@ public class Crawler {
                     Connection connection = Jsoup.connect(url);
                     Connection.Response resp = Jsoup.connect(url).timeout(100 * 1000).ignoreHttpErrors(false).followRedirects(true).execute();
                     Document doc = null;
+                    
 
                     //Checks for a 200 code.
                     if (resp.statusCode() == 200) {
                         doc = connection.get();
+                        String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
+                        String htmlText = connection.maxBodySize(Integer.MAX_VALUE).get().html();
+                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
+                        FileUtils.writeStringToFile(newHtmlFile, htmlText);
+                        System.out.println(htmlTitle);
                     }
 
                     if (doc != null) {
@@ -93,9 +101,9 @@ public class Crawler {
 
         //Connects to a URL. Goes up to 3 levels.
         //Begins with one url, Tier: 0, totalSize 1.
-        String u = null, d = null;
+        String u = "https://www.google.com/webhp?hl=en", d = "1";
 
-        try{
+       try{
             for(int i = 0; i < args.length; i++){
                 if(args[i].equals("-d")){
                     d = args[i+1];
