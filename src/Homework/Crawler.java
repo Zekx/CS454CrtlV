@@ -42,7 +42,8 @@ public class Crawler {
                         BasicDBObject mongoDoc = new BasicDBObject()
                         		.append("name", htmlTitle)
                         		.append("url", url)
-                        		.append("creationTime", System.currentTimeMillis());
+                        		.append("creationTime", System.currentTimeMillis())
+                        		.append("HTML_Text", htmlText);
                         db.insert(mongoDoc);
                         		
                         File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
