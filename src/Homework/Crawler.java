@@ -23,6 +23,8 @@ public class Crawler {
     private List<String> goingToVisit = new LinkedList<String>();
     private Set<String> visitedAlready = new HashSet<String>();
 
+
+
     public void urlCrawler(String url, int height, int level, int levelSize, DBCollection db) {
         while (level <= height) {
             System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
