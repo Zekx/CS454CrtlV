@@ -14,6 +14,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
@@ -38,6 +39,12 @@ public class Crawler {
                         doc = connection.get();
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                         String htmlText = connection.maxBodySize(Integer.MAX_VALUE).get().html();
+                        BasicDBObject mongoDoc = new BasicDBObject()
+                        		.append("name", htmlTitle)
+                        		.append("url", url)
+                        		.append("creationTime", System.currentTimeMillis());
+                        db.insert(mongoDoc);
+                        		
                         File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
                         FileUtils.writeStringToFile(newHtmlFile, htmlText);
                         System.out.println(htmlTitle);
