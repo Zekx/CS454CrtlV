@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.tika:tika-xmp:1.11">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.tika/tika-xmp/1.11/7bcd292ea85d8390efc053b660ab0332fc0867bf/tika-xmp-1.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.tika/tika-xmp/1.11/ae846a61dbd58adac759d91b70ad97bbd51e312f/tika-xmp-1.11-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

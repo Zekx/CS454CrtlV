@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.tika:tika-serialization:1.11">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.tika/tika-serialization/1.11/a89592248f8740daae5d4d5bc10edd364108d826/tika-serialization-1.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.tika/tika-serialization/1.11/4f3ef993d5e282c421d2d24a4100e0314084ba15/tika-serialization-1.11-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
