@@ -38,17 +38,21 @@ public class Crawler {
                     //Checks for a 200 code.
                     if (resp.statusCode() == 200) {
                         doc = connection.get();
+                        System.out.println(resp.body());
+                        // TODO: Need to somehow implement img downloading and videos
+                        // Maybe check for attribute tag for img and then check src is url is same then download as jpg/mp4?
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                         String htmlText = connection.maxBodySize(Integer.MAX_VALUE).get().html();
                         BasicDBObject mongoDoc = new BasicDBObject()
                         		.append("name", htmlTitle)
                         		.append("url", url)
                         		.append("creationTime", System.currentTimeMillis())
-                        		.append("HTML_Text", htmlText);
+                        		// Changed this to be the response body because this is the legit html src.
+                        		.append("HTML_Text", resp.body());
                         db.insert(mongoDoc);
                         		
                         File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
-                        FileUtils.writeStringToFile(newHtmlFile, htmlText);
+                        FileUtils.writeStringToFile(newHtmlFile, resp.body());
                         System.out.println(htmlTitle);
                     }
 
@@ -110,7 +114,7 @@ public class Crawler {
 
         //Connects to a URL. Goes up to 3 levels.
         //Begins with one url, Tier: 0, totalSize 1.
-        String u = null, d = null;
+        String u = "http://www.w3schools.com/html/html_images.asp", d = "2";
 
        try{
             for(int i = 0; i < args.length; i++){
