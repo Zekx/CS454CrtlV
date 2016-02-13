@@ -1,12 +1,17 @@
 package Homework;
 
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Connection;
@@ -38,11 +43,16 @@ public class Crawler {
                     //Checks for a 200 code.
                     if (resp.statusCode() == 200) {
                         doc = connection.get();
-                        System.out.println(resp.body());
+                        System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
+                        String baseUrl = url.substring(0, url.indexOf("/", 7));
+                        Elements imgs = doc.getElementsByTag("img");
+                        for(int i = 0; i < imgs.size(); i++) {
+                        	String src = imgs.get(i).attributes().get("src");
+                        	downloadImage(baseUrl, src);
+                        }
                         // TODO: Need to somehow implement img downloading and videos
                         // Maybe check for attribute tag for img and then check src is url is same then download as jpg/mp4?
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
-                        String htmlText = connection.maxBodySize(Integer.MAX_VALUE).get().html();
                         BasicDBObject mongoDoc = new BasicDBObject()
                         		.append("name", htmlTitle)
                         		.append("url", url)
@@ -94,6 +104,34 @@ public class Crawler {
                 }
             }
         }
+    }
+    
+    
+    // Credits to http://www.compiletimeerror.com/2013/08/java-downloadextract-all-images-from.html#.Vr6KyObpxfY 
+    // for the downloadImage method
+    private static void downloadImage(String url, String imgSrc) throws IOException {
+        BufferedImage image = null;
+        try {
+            if (!(imgSrc.startsWith("http"))) {
+                url = url + imgSrc;
+            } else {
+                url = imgSrc;
+            }
+            imgSrc = imgSrc.substring(imgSrc.lastIndexOf("/") + 1);
+            String imageFormat = null;
+            imageFormat = imgSrc.substring(imgSrc.lastIndexOf(".") + 1);
+            String imgPath = null;
+            imgPath = "C:/data/images/" + imgSrc + "";
+            URL imageUrl = new URL(url);
+            image = ImageIO.read(imageUrl);
+            if (image != null) {
+                File file = new File(imgPath);
+                ImageIO.write(image, imageFormat, file);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
 
