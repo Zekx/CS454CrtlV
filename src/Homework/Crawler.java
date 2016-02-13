@@ -48,7 +48,14 @@ public class Crawler {
                         Elements imgs = doc.getElementsByTag("img");
                         for(int i = 0; i < imgs.size(); i++) {
                         	String src = imgs.get(i).attributes().get("src");
+                        	if (!src.startsWith("http")) {
                         	downloadImage(baseUrl, src);
+                        	} else {
+                        		if (src.contains(baseUrl)) {
+                        			downloadImage(baseUrl, src);
+                        		}
+                        	}
+                        	
                         }
                         // TODO: Need to somehow implement img downloading and videos
                         // Maybe check for attribute tag for img and then check src is url is same then download as jpg/mp4?
@@ -157,7 +164,7 @@ public class Crawler {
 
         //Connects to a URL. Goes up to 3 levels.
         //Begins with one url, Tier: 0, totalSize 1.
-        String u = "http://www.w3schools.com/html/html_images.asp", d = "2";
+        String u = null, d = null;
 
        try{
             for(int i = 0; i < args.length; i++){
