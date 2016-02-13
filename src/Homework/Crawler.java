@@ -43,7 +43,7 @@ public class Crawler {
                     //Checks for a 200 code.
                     if (resp.statusCode() == 200) {
                         doc = connection.get();
-                        System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
+                        //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
                         String baseUrl = url.substring(0, url.indexOf("/", 7));
                         Elements imgs = doc.getElementsByTag("img");
                         for(int i = 0; i < imgs.size(); i++) {
@@ -113,7 +113,12 @@ public class Crawler {
         BufferedImage image = null;
         try {
             if (!(imgSrc.startsWith("http"))) {
-                url = url + imgSrc;
+            	if(imgSrc.startsWith("/")) {
+                    url = url + imgSrc;            		
+            	} else {
+            		url = url + "/" + imgSrc;
+            	}
+
             } else {
                 url = imgSrc;
             }

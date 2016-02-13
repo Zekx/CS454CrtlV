@@ -22,6 +22,8 @@ dependencies {
 	
 	compile 'org.apache.tika:tika-app:1.11'
 	
+	compile 'org.glassfish:javax.json:1.0.4'
+	
 	runtime 'org.apache.tika:tika-parsers:1.11'
 
 }
