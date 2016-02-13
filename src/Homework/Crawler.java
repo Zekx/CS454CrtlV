@@ -54,9 +54,9 @@ public class Crawler {
                         // Maybe check for attribute tag for img and then check src is url is same then download as jpg/mp4?
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                         BasicDBObject mongoDoc = new BasicDBObject()
-                        		.append("name", htmlTitle)
-                        		.append("url", url)
-                        		.append("creationTime", System.currentTimeMillis())
+                        		//.append("name", htmlTitle)
+                        		//.append("url", url)
+                        		//.append("creationTime", System.currentTimeMillis())
                         		// Changed this to be the response body because this is the legit html src.
                         		.append("HTML_Text", resp.body());
                         db.insert(mongoDoc);
