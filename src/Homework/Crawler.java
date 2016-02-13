@@ -6,9 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -27,62 +29,69 @@ import com.mongodb.MongoClient;
 
 public class Crawler {
     private List<String> goingToVisit = new LinkedList<String>();
+    private Map<String, String> pageNames = new HashMap<String, String>();
     private Set<String> visitedAlready = new HashSet<String>();
+    
+    public Map<String, String> getPageNames(){
+    	return pageNames;
+    }
 
-    public void urlCrawler(String url, int height, int level, int levelSize, DBCollection db) {
+    public void urlCrawler(String url, int height, Boolean extract, int level, int levelSize, DBCollection db) {
         while (level <= height) {
             System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
 
             try {
                 if (!url.replace(" ", "").isEmpty()) {
                     Connection connection = Jsoup.connect(url);
-                    Connection.Response resp = Jsoup.connect(url).timeout(100 * 1000).ignoreHttpErrors(false).followRedirects(true).execute();
+                    Connection.Response resp = Jsoup.connect(url).timeout(5 * 1000).ignoreHttpErrors(true).followRedirects(true).execute();
                     Document doc = null;
                     
 
                     //Checks for a 200 code.
                     if (resp.statusCode() == 200) {
                         doc = connection.get();
-                        //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
-                        String baseUrl = url.substring(0, url.indexOf("/", 7));
-                        Elements imgs = doc.getElementsByTag("img");
-                        for(int i = 0; i < imgs.size(); i++) {
-                        	String src = imgs.get(i).attributes().get("src");
-                        	if (!src.startsWith("http")) {
-                        	downloadImage(baseUrl, src);
-                        	} else {
-                        		if (src.contains(baseUrl)) {
-                        			downloadImage(baseUrl, src);
-                        		}
-                        	}
-                        	
-                        }
-                        // TODO: Need to somehow implement img downloading and videos
-                        // Maybe check for attribute tag for img and then check src is url is same then download as jpg/mp4?
-                        String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
-                        BasicDBObject mongoDoc = new BasicDBObject()
-                        		//.append("name", htmlTitle)
-                        		//.append("url", url)
-                        		//.append("creationTime", System.currentTimeMillis())
-                        		// Changed this to be the response body because this is the legit html src.
-                        		.append("HTML_Text", resp.body());
-                        db.insert(mongoDoc);
-                        		
-                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
-                        FileUtils.writeStringToFile(newHtmlFile, resp.body());
-                        System.out.println(htmlTitle);
-                    }
-
-                    if (doc != null) {
-                        Elements allLinks = doc.select("a[href]");
-                        for (Element link : allLinks) {
-                            if (link != null) {
-                                if (!this.visitedAlready.contains(link.attr("abs:href"))) {
-                                    this.goingToVisit.add(link.attr("abs:href"));
+                        
+                        if (doc != null) {
+                            Elements allLinks = doc.select("a[href]");
+                            for (Element link : allLinks) {
+                                if (link != null) {
+                                    if (!this.visitedAlready.contains(link.attr("abs:href"))) {
+                                        this.goingToVisit.add(link.attr("abs:href"));
+                                    }
                                 }
                             }
                         }
+                        
+                        this.pageNames.put( connection.maxBodySize(Integer.MAX_VALUE).get().title() , url);
+                        
+                        if(extract){
+                        	String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
+                        	
+                          File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
+                          FileUtils.writeStringToFile(newHtmlFile, resp.body());
+                          System.out.println(htmlTitle);
+                        }
+                        
+                        //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
+                        if(extract){
+                        	String baseUrl = url.substring(0, url.indexOf("/", 7));
+                            Elements imgs = doc.getElementsByTag("img");
+                            for(int i = 0; i < imgs.size(); i++) {
+                            	String src = imgs.get(i).attributes().get("src");
+                            	if (!src.startsWith("http")) {
+                            	downloadImage(baseUrl, src);
+                            	} else {
+                            		if (src.contains(baseUrl)) {
+                            			downloadImage(baseUrl, src);
+                            		}
+                            	}
+                            	
+                            }
+                        }
+                      
                     }
+
+                
                 }
             } catch (Exception e) {
                 System.out.println("\n following url page: " + url + " was unable to be read...\n");
@@ -142,51 +151,6 @@ public class Crawler {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-        }
-
-    }
-
-
-    public static void main(String[] args) throws IOException {
-
-        //Connects to the Mongo Database.
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
-        DB db = null;
-        DBCollection table = null;
-
-        System.out.println("Establishing connection...");
-
-        //Get the connection.
-        db = mongoClient.getDB("crawler");
-        table = db.getCollection("urlpages");
-
-        System.out.println("Connected to MongoDB!");
-
-        //Connects to a URL. Goes up to 3 levels.
-        //Begins with one url, Tier: 0, totalSize 1.
-        String u = null, d = null;
-
-       try{
-            for(int i = 0; i < args.length; i++){
-                if(args[i].equals("-d")){
-                    d = args[i+1];
-                }
-                if(args[i].equals("-u")){
-                    u = args[i+1];
-                }
-                if(u != null && d != null){
-                    break;
-                }
-            }
-
-            Crawler crawl = new Crawler();
-            crawl.urlCrawler(u, Integer.parseInt(d), 0, 1, table);
-
-            mongoClient.close();
-
-            System.out.println("\nThe crawler has completed its run!");
-        }catch(Exception e){
-            System.out.println("The inputted parameters were invalid.");
         }
 
     }

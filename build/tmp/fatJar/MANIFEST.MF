@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Title: Gradle Jar Crawler
+Implementation-Version: 1.0
+Main-Class: Homework.java_dump
+

@@ -1,14 +1,21 @@
 package Homework;
 
-import java.io.BufferedInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileInputStream;
+import java.io.*;
 import java.nio.file.Files;
-import java.io.File;
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+
+import com.mongodb.MongoClient;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlParser;
+import org.apache.tika.sax.TeeContentHandler;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -20,48 +27,92 @@ import org.xml.sax.SAXException;
  * Created by NIck on 2/6/2016.
  */
 public class Extractor {
+    private ArrayList<String> set;
+    private JSONArray data;
+    private JSONObject meta;
 
     //This method extracts the specific document and outputs a set of string
     //Not sure if we should keep track of the count per word
-    public static Set<String> extract(File file)  throws IOException, SAXException, TikaException
+    public JSONArray extract(File file)  throws IOException, SAXException, TikaException
     {
-        Set<String> set = new HashSet<String>();
-
         //I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
-        try (InputStream stream = new BufferedInputStream(new FileInputStream(file.toString()))) {
-
-            AutoDetectParser parser = new AutoDetectParser();
-            BodyContentHandler handler = new BodyContentHandler();
+        try{
+            InputStream stream = new FileInputStream(file);
+            BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
             Metadata metadata = new Metadata();
+            new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
 
-            parser.parse(stream, handler, metadata);
+            data = new JSONArray();
 
-            set.add(handler.toString().replaceAll("\\s+"," ")); //This should remove most of the white spaces
+            //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
+            String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
+            for(String s: split){
+                System.out.println(s);
+                data.add(s);
+            }
 
-        } catch (TikaException e) {
+//            set.add(handler.toString().replaceAll("\\s+"," ")); //This should remove most of the white spaces
+//            data.add(handler.toString().replaceAll("\\s+"," "));
+//            System.out.println(handler.toString().replaceAll("\\s+"," "));
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return set;
+        return data;
+    }
+
+    public JSONObject extractMeta(File file) throws IOException, SAXException, TikaException{
+        try {
+
+            InputStream stream = new FileInputStream(file);
+            BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
+            Metadata metadata = new Metadata();
+            new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
+
+            meta = new JSONObject();
+            //For extracting metadata information
+            for(String s : metadata.names()){
+                System.out.println(s + " : " + metadata.get(s));
+                meta.put(s, metadata.get(s));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return meta;
     }
 
     //This extracts the information to a JSON file
-    public void exportJson()
+    public void exportJson(File file, String name, String url, JSONObject metadata, JSONArray data, DBCollection table)
     {
         //
+        BasicDBObject doc = new BasicDBObject()
+                .append("name", name)
+                .append("url", url)
+                .append("metadata", metadata)
+                .append("data", data)
+                .append("path", file.toString());
+
+        table.insert(doc);
     }
 
     public static void main(String[] args) throws IOException, SAXException, TikaException
     {
-
-        File file = new File ("Insert file path here");
-        Set<String> set = extract(file);
-        /*File[] fileList = file.listFiles();*/
-        for(String s: set)
-        {
-            System.out.println(s);
-        }
-
+//        //Connects to the Mongo Database.
+//        MongoClient mongoClient = new MongoClient("localhost", 27017);
+//        DB db = null;
+//        DBCollection table = null;
+//
+//        System.out.println("Establishing connection...");
+//
+//        //Get the connection.
+//        db = mongoClient.getDB("crawler");
+//        table = db.getCollection("urlpages");
+//
+//        File file = new File ("C:\\data\\htmls\\99 Homes - Movies & TV on Google Play.html");
+//        Extractor ext = new Extractor();
 
 
     }
