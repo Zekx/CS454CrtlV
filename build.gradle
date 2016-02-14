@@ -64,7 +64,7 @@ task fatJar(type: Jar){
     manifest{
         attributes 'Title': 'Gradle Jar Crawler',
                 'Implementation-Version': version,
-                'Main-Class': 'Homework.java_dump'
+                'Main-Class': 'Homework.Main'
     }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }

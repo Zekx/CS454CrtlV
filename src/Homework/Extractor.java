@@ -46,6 +46,7 @@ public class Extractor {
 
             //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
             String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
+            int docSize = split.length;
             for(String s: split){
                 System.out.println(s);
                 data.add(s);
@@ -91,6 +92,7 @@ public class Extractor {
         BasicDBObject doc = new BasicDBObject()
                 .append("name", name)
                 .append("url", url)
+                .append("Document length", data.size())
                 .append("metadata", metadata)
                 .append("data", data)
                 .append("path", file.toString());

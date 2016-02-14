@@ -16,6 +16,8 @@ import java.util.Set;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.io.FileUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -64,31 +66,40 @@ public class Crawler {
                         
                         this.pageNames.put( connection.maxBodySize(Integer.MAX_VALUE).get().title() , url);
                         
+                        String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
+                    	
+                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
+                        FileUtils.writeStringToFile(newHtmlFile, resp.body());
+                        
+                        //If -e is entered, then begin extraction here.
                         if(extract){
-                        	String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
+                        	File file = new File("C:\\data\\htmls\\"+htmlTitle+".html");
+                        	Extractor ext = new Extractor();
                         	
-                          File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
-                          FileUtils.writeStringToFile(newHtmlFile, resp.body());
-                          System.out.println(htmlTitle);
+                        	JSONArray dataSet;
+                            dataSet = ext.extract(file);
+
+                            JSONObject metadata = ext.extractMeta(file);
+
+                            ext.exportJson(file, htmlTitle, url, metadata, dataSet, db);
                         }
                         
                         //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
-                        if(extract){
-                        	String baseUrl = url.substring(0, url.indexOf("/", 7));
-                            Elements imgs = doc.getElementsByTag("img");
-                            for(int i = 0; i < imgs.size(); i++) {
-                            	String src = imgs.get(i).attributes().get("src");
-                            	if (!src.startsWith("http")) {
-                            	downloadImage(baseUrl, src);
-                            	} else {
-                            		if (src.contains(baseUrl)) {
-                            			downloadImage(baseUrl, src);
-                            		}
-                            	}
-                            	
-                            }
+                        //Give images the same name as the html. If exisiting image has the same name, add a number to the end.
+                        // eg htmltitle-imgname-someNum.
+                        String baseUrl = url.substring(0, url.indexOf("/", 7));
+                        Elements imgs = doc.getElementsByTag("img");
+                        for(int i = 0; i < imgs.size(); i++) {
+                        	String src = imgs.get(i).attributes().get("src");
+                        	if (!src.startsWith("http")) {
+                        	downloadImage(baseUrl, src);
+                        	} else {
+                        		if (src.contains(baseUrl)) {
+                        			downloadImage(baseUrl, src);
+                        		}
+                        	}
+                        	
                         }
-                      
                     }
 
                 
