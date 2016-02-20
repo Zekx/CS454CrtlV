@@ -68,12 +68,12 @@ public class Crawler {
                         
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                     	
-                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle+".html");
+                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle.hashCode()+".html");
                         FileUtils.writeStringToFile(newHtmlFile, resp.body());
                         
                         //If -e is entered, then begin extraction here.
                         if(extract){
-                        	File file = new File("C:\\data\\htmls\\"+htmlTitle+".html");
+                        	File file = new File("C:\\data\\htmls\\"+htmlTitle.hashCode()+".html");
                         	Extractor ext = new Extractor();
                         	
                         	JSONArray dataSet;
@@ -153,7 +153,7 @@ public class Crawler {
             String imageFormat = null;
             imageFormat = imgSrc.substring(imgSrc.lastIndexOf(".") + 1);
             String imgPath = null;
-            imgPath = "C:/data/images/" + imgSrc + "";
+            imgPath = "C:/data/images/" + imgSrc.hashCode() + "";
             URL imageUrl = new URL(url);
             image = ImageIO.read(imageUrl);
             if (image != null) {
