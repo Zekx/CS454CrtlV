@@ -28,8 +28,29 @@ import org.xml.sax.SAXException;
  */
 public class Extractor {
     private ArrayList<String> set;
+    private ArrayList<String> stopWords;
     private JSONArray data;
     private JSONObject meta;
+    
+    public Extractor(){
+    	stopWords = new ArrayList<String>();
+    	
+    	File file = new File(".\\resources\\stopwords.txt");
+    	try{
+    		BufferedReader stream = new BufferedReader(new FileReader(file));
+    		
+    		String line = stream.readLine();
+
+    	    while (line != null) {
+    	    	System.out.println(line);
+    	        stopWords.add(line);
+    	        line = stream.readLine();
+    	    }
+    		
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
+    }
 
     //This method extracts the specific document and outputs a set of string
     //Not sure if we should keep track of the count per word
@@ -48,8 +69,18 @@ public class Extractor {
             String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
             int docSize = split.length;
             for(String s: split){
-                System.out.println(s);
-                data.add(s);
+                //Tokenizing the strings
+                if(s.contains("-")){
+                	String[] split2 = s.split("-");
+                	data.add(s.replaceAll("[+.^:,]",""));
+                	
+                	for(String t: split2){
+                		data.add(t.replaceAll("[+.^:,]",""));
+                	}
+                }
+                else{
+                	data.add(s.replaceAll("[+.^:,]",""));
+                }
             }
 
 //            set.add(handler.toString().replaceAll("\\s+"," ")); //This should remove most of the white spaces
@@ -98,6 +129,12 @@ public class Extractor {
                 .append("path", file.toString());
 
         table.insert(doc);
+    }
+    
+    public void index(DB db){
+    	DBCollection index = db.getCollection("index");
+    	
+    	
     }
 
     public static void main(String[] args) throws IOException, SAXException, TikaException

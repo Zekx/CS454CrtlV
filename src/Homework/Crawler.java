@@ -31,14 +31,10 @@ import com.mongodb.MongoClient;
 
 public class Crawler {
     private List<String> goingToVisit = new LinkedList<String>();
-    private Map<String, String> pageNames = new HashMap<String, String>();
     private Set<String> visitedAlready = new HashSet<String>();
     
-    public Map<String, String> getPageNames(){
-    	return pageNames;
-    }
 
-    public void urlCrawler(String url, int height, Boolean extract, int level, int levelSize, DBCollection db) {
+    public void urlCrawler(String url, int height, Boolean extract, int level, int levelSize, DB database, DBCollection table) {
         while (level <= height) {
             System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
 
@@ -64,8 +60,6 @@ public class Crawler {
                             }
                         }
                         
-                        this.pageNames.put( connection.maxBodySize(Integer.MAX_VALUE).get().title() , url);
-                        
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                     	
                         File newHtmlFile = new File("C:/data/htmls/"+htmlTitle.hashCode()+".html");
@@ -81,7 +75,7 @@ public class Crawler {
 
                             JSONObject metadata = ext.extractMeta(file);
 
-                            ext.exportJson(file, htmlTitle, url, metadata, dataSet, db);
+                            ext.exportJson(file, htmlTitle, url, metadata, dataSet, table);
                         }
                         
                         //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));

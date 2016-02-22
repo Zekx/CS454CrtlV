@@ -63,7 +63,7 @@ class Main{
             }
 
             Crawler crawl = new Crawler();
-            crawl.urlCrawler(u, Integer.parseInt(d), e, 0, 1, table);
+            crawl.urlCrawler(u, Integer.parseInt(d), e, 0, 1, db, table);
 
             System.out.println("\nThe crawler has completed its run!");
 
