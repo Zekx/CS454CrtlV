@@ -179,12 +179,13 @@ public class Extractor {
     		
     		if(!this.stopWords.contains(w)){
     			if(index.findOne(new BasicDBObject("word",w.toString())) == null){
-    				JSONObject doc = new JSONObject();
+    				JSONArray doc = new JSONArray();
     				JSONObject innerDoc = new JSONObject();
     				
     				innerDoc.put("Frequency", occurrence);
     				innerDoc.put("Positions", positions);
-    				doc.put(Integer.toString(urlHash), innerDoc);
+    				innerDoc.put("docHash", urlHash);
+    				doc.add(innerDoc);
     				
     				BasicDBObject entry = new BasicDBObject()
     					.append("word", w.toString())
@@ -195,14 +196,15 @@ public class Extractor {
     			else{
     				DBObject entry = index.findOne(new BasicDBObject("word",w.toString()));
     				
-    				BasicDBObject doc = (BasicDBObject) entry.get("document");
+    				BasicDBList doc = (BasicDBList) entry.get("document");
     				JSONObject innerDoc = new JSONObject();
     				innerDoc.put("Frequency", occurrence);
     				innerDoc.put("Positions", positions);
+    				innerDoc.put("docHash", urlHash);
     				
     				if(!doc.containsField(Integer.toString(urlHash))){
     					System.out.println(entry.get("word"));
-        				doc.append(Integer.toString(urlHash), innerDoc);
+        				doc.add(innerDoc);
         				System.out.println(doc);
         				
         				BasicDBObject update = new BasicDBObject();
