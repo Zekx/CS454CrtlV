@@ -16,11 +16,11 @@ import java.io.IOException;
 import java.util.List;
 
 
-public class java_dump
+public class index_dump
 {
     public void dumpFile(DBCollection table) throws IOException {
         List<DBObject> result = table.find().toArray();
-        File file = new File("C:\\data\\dump_file.json");
+        File file = new File("C:\\data\\dump_index.json");
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         FileOutputStream fos = new FileOutputStream("C:\\data\\dump_file.json");
         ObjectMapper mapper = new ObjectMapper();
@@ -46,9 +46,9 @@ public class java_dump
 
          //Get the connection.
          db = mongoClient.getDB("crawler");
-         table = db.getCollection("urlpages");
+         table = db.getCollection("index");
          
-         java_dump test = new java_dump();
+         index_dump test = new index_dump();
          System.out.println("Connected to MongoDB!");
          test.dumpFile(table);
 

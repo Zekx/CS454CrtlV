@@ -35,6 +35,7 @@ public class Crawler {
     
 
     public void urlCrawler(String url, int height, Boolean extract, int level, int levelSize, DB database, DBCollection table) {
+    	Extractor ext = new Extractor();
         while (level <= height) {
             System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
 
@@ -62,13 +63,12 @@ public class Crawler {
                         
                         String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                     	
-                        File newHtmlFile = new File("C:/data/htmls/"+htmlTitle.hashCode()+".html");
+                        File newHtmlFile = new File("C:/data/htmls/"+url.hashCode()+".html");
                         FileUtils.writeStringToFile(newHtmlFile, resp.body());
                         
                         //If -e is entered, then begin extraction here.
                         if(extract){
-                        	File file = new File("C:\\data\\htmls\\"+htmlTitle.hashCode()+".html");
-                        	Extractor ext = new Extractor();
+                        	File file = new File("C:\\data\\htmls\\"+url.hashCode()+".html");
                         	
                         	JSONArray dataSet;
                             dataSet = ext.extract(file);
@@ -76,6 +76,7 @@ public class Crawler {
                             JSONObject metadata = ext.extractMeta(file);
 
                             ext.exportJson(file, htmlTitle, url, metadata, dataSet, table);
+                            ext.index(database, url.hashCode());
                         }
                         
                         //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
@@ -100,6 +101,8 @@ public class Crawler {
                 }
             } catch (Exception e) {
                 System.out.println("\n following url page: " + url + " was unable to be read...\n");
+                
+                e.printStackTrace();
             }
 
             //This page has fully been visited.
