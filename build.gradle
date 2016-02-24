@@ -9,6 +9,8 @@ repositories {
     mavenCentral()
 }
 
+
+
 dependencies {
     compile 'com.google.guava:guava:18.0'
 
@@ -29,8 +31,12 @@ dependencies {
     compile 'org.codehaus.jackson:jackson-core-asl:1.9.13'
 
 	compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.0'
+	
+	compile 'org.apache.hadoop:hadoop-core:0.20.2'
 
+	
 }
+
 
 test {
     // show standard out and standard error of the test JVM(s) on the console
