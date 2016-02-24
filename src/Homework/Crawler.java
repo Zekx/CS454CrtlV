@@ -35,7 +35,9 @@ public class Crawler {
     
 
     public void urlCrawler(String url, int height, Boolean extract, int level, int levelSize, DB database, DBCollection table) {
+    	Indexer index = new Indexer();
     	Extractor ext = new Extractor();
+    	
         while (level <= height) {
             System.out.println(url + " Tier:" + level + " current Tier Size:" + levelSize + " Current Total Size:" + this.goingToVisit.size());
 
@@ -71,12 +73,12 @@ public class Crawler {
                         	File file = new File("C:\\data\\htmls\\"+url.hashCode()+".html");
                         	
                         	JSONArray dataSet;
-                            dataSet = ext.extract(file);
 
                             JSONObject metadata = ext.extractMeta(file);
 
-                            ext.exportJson(file, htmlTitle, url, metadata, dataSet, table);
-                            ext.index(database, url.hashCode());
+                            ext.exportJson(file, htmlTitle, url, metadata, table);
+                            //Indexer.run(file.toString().replace("\\", "/"));
+                            ext.indexTerms(database, url.hashCode(), file);
                         }
                         
                         //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));

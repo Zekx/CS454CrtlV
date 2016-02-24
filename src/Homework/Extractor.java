@@ -4,8 +4,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
+import com.mchange.v1.util.ArrayUtils;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -30,6 +32,7 @@ import org.xml.sax.SAXException;
  */
 public class Extractor {
     private ArrayList<String> stopWords;
+    private ArrayList<String> documentWords;
     private JSONArray data;
     private JSONObject meta;
     
@@ -122,7 +125,7 @@ public class Extractor {
     }
 
     //This extracts the information to a JSON file
-    public void exportJson(File file, String name, String url, JSONObject metadata, JSONArray data, DBCollection table)
+    public void exportJson(File file, String name, String url, JSONObject metadata, DBCollection table)
     {
         //
         BasicDBObject doc = new BasicDBObject()
@@ -131,92 +134,113 @@ public class Extractor {
                 .append("hash", url.hashCode())
                 .append("Document length", data.size())
                 .append("metadata", metadata)
-                .append("data", data)
                 .append("path", file.toString());
 
         table.insert(doc);
     }
     
-    public int getFrequency(BasicDBList list, Object w){
-    	int total = 0;
-    	
-    	for(Object str: list){
-    		if(str.equals(w)){
-    			total++;
-    		}
-    	}
-    	
-    	return total;
-    }
-    
-    public JSONArray getPositions(BasicDBList list, Object w){
-    	JSONArray arr = new JSONArray();
-    	Integer index = 0;
-    	
-    	for(Object str: list){
-    		if(str.equals(w)){
-    			arr.add(index);
-    		}
-    		index++;
-    	}
-    	
-    	return arr;
-    }
-    
-    public void index(DB db, int urlHash) throws InterruptedException{
+    public void indexTerms(DB db, int urlHash, File file) throws InterruptedException{
     	DBCollection table = db.getCollection("urlpages");
     	DBCollection index = db.getCollection("index");
+    	documentWords = new ArrayList<String>();
     	
-    	BasicDBObject query = new BasicDBObject("hash", urlHash);
-    	DBObject document = table.findOne(query);
-    	
-    	//Retrieves the list of words found in a document.
-    	BasicDBList words = (BasicDBList) document.get("data");
-    	for(Object w: words){
-    		int occurrence = this.getFrequency(words, w);
-    		JSONArray positions = this.getPositions(words, w);
-    		//System.out.println(w);
-    		
-    		if(!this.stopWords.contains(w)){
-    			if(index.findOne(new BasicDBObject("word",w.toString())) == null){
-    				JSONArray doc = new JSONArray();
-    				JSONObject innerDoc = new JSONObject();
-    				
-    				innerDoc.put("Frequency", occurrence);
-    				innerDoc.put("Positions", positions);
-    				innerDoc.put("docHash", urlHash);
-    				doc.add(innerDoc);
-    				
-    				BasicDBObject entry = new BasicDBObject()
-    					.append("word", w.toString())
-    					.append("document", doc);
-    				
-    				index.insert(entry);
-    			}
-    			else{
-    				DBObject entry = index.findOne(new BasicDBObject("word",w.toString()));
-    				
-    				BasicDBList doc = (BasicDBList) entry.get("document");
-    				JSONObject innerDoc = new JSONObject();
-    				innerDoc.put("Frequency", occurrence);
-    				innerDoc.put("Positions", positions);
-    				innerDoc.put("docHash", urlHash);
-    				
-    				if(!doc.containsField(Integer.toString(urlHash))){
-    					System.out.println(entry.get("word"));
+    	//I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
+        try{
+            InputStream stream = new FileInputStream(file);
+            BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
+            Metadata metadata = new Metadata();
+            new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
+            
+            int counter = 0;
+            //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
+            String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
+            for(String s : split){
+            	
+            	if(s.contains("-") || s.matches("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")){
+                	String[] split2 = s.replaceAll("-", " ").split(" ");
+                	documentWords.add(s.replaceAll("[^a-zA-Z-]+","").toLowerCase());
+                	
+                	for(String t: split2){
+                		if(!t.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(t.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                	}
+                }
+                else{
+                	if(!s.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                }
+
+            }
+            
+            for(String s : documentWords){  
+  		
+        		if(!this.stopWords.contains(s)){
+        			if(index.findOne(new BasicDBObject("word",s.toString())) == null){
+        				JSONArray doc = new JSONArray();
+        				JSONObject innerDoc = new JSONObject();
+        				
+        				innerDoc.put("Frequency", 1);
+        				innerDoc.put("Positions", counter);
+        				innerDoc.put("docHash", urlHash);
         				doc.add(innerDoc);
-        				System.out.println(doc);
         				
-        				BasicDBObject update = new BasicDBObject();
-    					update.put("$set", new BasicDBObject("word", w.toString()));
-    					update.put("$set", new BasicDBObject("document", doc));
+        				BasicDBObject entry = new BasicDBObject()
+        					.append("word", s.toString())
+        					.append("document", doc);
         				
-        				index.update(new BasicDBObject("word", w.toString()), update);
-    				}
-    			}
-    		}
-    	}
-    	
+        				index.insert(entry);
+        			}
+        			else{
+        				DBObject entry = index.findOne(new BasicDBObject("word",s.toString()));
+        				
+        				BasicDBList doc = (BasicDBList) entry.get("document");
+        				JSONObject innerDoc = new JSONObject();
+        				Boolean docUpdate = false;
+        				
+        				for(Object docu: doc){
+        					BasicDBObject item = (BasicDBObject) docu;
+        					
+        					if((int)item.get("docHash") == urlHash){     
+        						int freq = Integer.parseInt(item.get("Frequency").toString()) + 1;
+        						
+            					innerDoc.put("Frequency", Integer.toString(freq));
+                				innerDoc.put("Positions", item.get("Positions") + " " + counter);
+                				innerDoc.put("docHash", urlHash);
+            					
+            					System.out.println(entry.get("word"));
+            					doc.remove(item);
+                				doc.add(innerDoc);
+                				System.out.println(doc);
+                				
+                				BasicDBObject update = new BasicDBObject();
+            					update.put("$set", new BasicDBObject("word", s.toString()));
+            					update.put("$set", new BasicDBObject("document", doc));
+                				
+                				index.update(new BasicDBObject("word", s.toString()), update);
+                				docUpdate = true;
+            				}	       					
+        				}
+        				if(!docUpdate){
+        					innerDoc.put("Frequency", 1);
+            				innerDoc.put("Positions", counter);
+            				innerDoc.put("docHash", urlHash);
+        					
+        					System.out.println(entry.get("word"));
+            				doc.add(innerDoc);
+            				System.out.println(doc);
+            				
+            				BasicDBObject update = new BasicDBObject();
+        					update.put("$set", new BasicDBObject("word", s.toString()));
+        					update.put("$set", new BasicDBObject("document", doc));
+            				
+            				index.update(new BasicDBObject("word", s.toString()), update);
+        				}
+        			}
+        		}
+        		
+        		counter++;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) throws IOException, SAXException, TikaException
