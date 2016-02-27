@@ -1,7 +1,9 @@
 package Homework;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
@@ -13,16 +15,37 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class java_dump
 {
-    public void dumpFile(DBCollection table) throws IOException {
-        List<DBObject> result = table.find().toArray();
+	public static List<DBObject> getList(DBCollection table)
+	{
+		List<DBObject> result = new ArrayList<DBObject>();
+		DBObject sample = new BasicDBObject();
+		DBObject removeID = new BasicDBObject("_id", 0);
+		
+		DBCursor cursor = table.find(sample, removeID);
+		
+		while(cursor.hasNext())
+		{
+			result.add(cursor.next());
+		}
+		
+		
+		return result;
+	}
+	
+    public void dumpFile(List<DBObject> result) throws IOException {
+        //List<DBObject> result = table.find().toArray();
+        
         File file = new File("C:\\data\\dump_file.json");
+        
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         FileOutputStream fos = new FileOutputStream("C:\\data\\dump_file.json");
+        
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
 
@@ -50,7 +73,9 @@ public class java_dump
          
          java_dump test = new java_dump();
          System.out.println("Connected to MongoDB!");
-         test.dumpFile(table);
+         
+         List<DBObject> list = getList(table);
+         test.dumpFile(list);
 
     }
 }
