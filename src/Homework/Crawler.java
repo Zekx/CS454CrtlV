@@ -151,8 +151,9 @@ public class Crawler {
             imgSrc = imgSrc.substring(imgSrc.lastIndexOf("/") + 1);
             String imageFormat = null;
             imageFormat = imgSrc.substring(imgSrc.lastIndexOf(".") + 1);
+            String imagename = imgSrc.substring(0, imgSrc.lastIndexOf("."));
             String imgPath = null;
-            imgPath = "C:/data/images/" + imgSrc.hashCode() + "";
+            imgPath = "C:/data/images/" + imagename.hashCode() + "." + imageFormat + "";
             URL imageUrl = new URL(url);
             image = ImageIO.read(imageUrl);
             if (image != null) {
