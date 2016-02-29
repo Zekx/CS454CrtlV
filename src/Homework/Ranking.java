@@ -5,5 +5,8 @@ public class Ranking {
 	// IDF = log total documents looking at / total # of documents containing the word
 	// The word will be based on the search query
 	// Need to crawl desktop
-
+	public void link_analysis()
+	{
+		
+	}
 }
