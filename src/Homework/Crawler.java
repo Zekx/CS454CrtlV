@@ -40,68 +40,71 @@ public class Crawler implements Runnable{
     	this.web = wb;
     }
     
-    public List<String> readDoc(String url, Extractor ext, List<String> incoming, DB db, DBCollection table) throws Exception{
-    	if (!url.replace(" ", "").isEmpty()) {
-    		
-            Connection connection = Jsoup.connect(url);
-            Connection.Response resp = Jsoup.connect(url).timeout(5 * 1000).ignoreHttpErrors(true).followRedirects(true).execute();
-            Document doc = null;
-            
-            incoming = new LinkedList<String>();
-            //Checks for a 200 code.
-            if (resp.statusCode() == 200) {
-                doc = connection.get();
+    public List<String> readDoc(String url, Extractor ext, List<String> incoming, DB db, DBCollection table){
+    	try{
+    		if (!url.replace(" ", "").isEmpty()) {
+                Connection connection = Jsoup.connect(url);
+                Connection.Response resp = Jsoup.connect(url).timeout(5 * 1000).ignoreHttpErrors(true).followRedirects(true).execute();
+                Document doc = null;
                 
-                if (doc != null) {
-                    Elements allLinks = doc.select("a[href]");
-                    for (Element link : allLinks) {
-                        if (link != null) {
-                            if (!web.visitedAlready.contains(link.attr("abs:href"))) {
-                            	incoming.add(link.attr("abs:href"));
+                incoming = new LinkedList<String>();
+                //Checks for a 200 code.
+                if (resp.statusCode() == 200) {
+                    doc = connection.get();
+                    
+                    if (doc != null) {
+                        Elements allLinks = doc.select("a[href]");
+                        for (Element link : allLinks) {
+                            if (link != null) {
+                                if (!web.visitedAlready.contains(link.attr("abs:href"))) {
+                                	incoming.add(link.attr("abs:href"));
+                                }
                             }
                         }
                     }
-                }
-                synchronized(web.lock){
-                	web.visitedAlready.add(url);
-                }
-                
-                String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
-            	
-                File newHtmlFile = new File("C:/data/htmls/"+url.hashCode()+".html");
-                FileUtils.writeStringToFile(newHtmlFile, resp.body());
-                
-                //If -e is entered, then begin extraction here.
-                if(web.extract){
-                	File file = new File("C:\\data\\htmls\\"+url.hashCode()+".html");
+                    synchronized(web.lock){
+                    	web.visitedAlready.add(url);
+                    }
+                    
+                    String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                 	
-                	JSONArray dataSet = ext.extract(file);
+                    File newHtmlFile = new File("C:/data/htmls/"+url.hashCode()+".html");
+                    FileUtils.writeStringToFile(newHtmlFile, resp.body());
+                    
+                    //If -e is entered, then begin extraction here.
+                    if(web.extract){
+                    	File file = new File("C:\\data\\htmls\\"+url.hashCode()+".html");
+                    	
+                    	JSONArray dataSet = ext.extract(file);
 
-                    JSONObject metadata = ext.extractMeta(file);
+                        JSONObject metadata = ext.extractMeta(file);
 
-                    ext.exportJson(file, htmlTitle, url, dataSet, metadata, table);
-                    //Indexer.run(file.toString().replace("\\", "/"));
-                    ext.indexTerms(db, url.hashCode(), file);
-                }
-                
-                //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
-                //Give images the same name as the html. If exisiting image has the same name, add a number to the end.
-                // eg htmltitle-imgname-someNum.
-                String baseUrl = url.substring(0, url.indexOf("/", 7));
-                Elements imgs = doc.getElementsByTag("img");
-                for(int i = 0; i < imgs.size(); i++) {
-                	String src = imgs.get(i).attributes().get("src");
-                	if (!src.startsWith("http")) {
-                	downloadImage(baseUrl, src);
-                	} else {
-                		if (src.contains(baseUrl)) {
-                			downloadImage(baseUrl, src);
-                		}
-                	}
-                	
+                        ext.exportJson(file, htmlTitle, url, dataSet, metadata, table);
+                        //Indexer.run(file.toString().replace("\\", "/"));
+                        ext.indexTerms(db, url.hashCode(), file);
+                    }
+                    
+                    //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
+                    //Give images the same name as the html. If exisiting image has the same name, add a number to the end.
+                    // eg htmltitle-imgname-someNum.
+                    String baseUrl = url.substring(0, url.indexOf("/", 7));
+                    Elements imgs = doc.getElementsByTag("img");
+                    for(int i = 0; i < imgs.size(); i++) {
+                    	String src = imgs.get(i).attributes().get("src");
+                    	if (!src.startsWith("http")) {
+                    	downloadImage(baseUrl, src);
+                    	} else {
+                    		if (src.contains(baseUrl)) {
+                    			downloadImage(baseUrl, src);
+                    		}
+                    	}
+                    	
+                    }
                 }
             }
-        }
+    	}catch(Exception e){
+    		e.printStackTrace();
+    	}
     	
     	return incoming;
     }
