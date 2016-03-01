@@ -15,10 +15,7 @@ public class Ranking {
 	// IDF = log total documents looking at / total # of documents containing the word
 	// The word will be based on the search query
 	// Need to crawl desktop
-	public void link_analysis()
-	{
-		
-	}
+
 	DB database;
 	DBCollection table = database.getCollection("urlpages");
 	DBCollection index = database.getCollection("index");
@@ -27,7 +24,12 @@ public class Ranking {
 	public Ranking(DB database) {
 		this.database = database;
 	}
-
+	
+	
+	public void link_analysis()
+	{
+		
+	}
 
 
 	public void TFIDF ( String term ) {
@@ -41,6 +43,7 @@ public class Ranking {
 			int wordCount = Integer.parseInt(obj.get("Frequency").toString());
 			int docSize = Integer.parseInt(table.findOne(new BasicDBObject("hash",
 					obj.get("docHash"))).get("Document length").toString());
+			
 			tfNum = TF(wordCount, docSize);
 			tfidfNum = tfNum * idfNum;
 			
