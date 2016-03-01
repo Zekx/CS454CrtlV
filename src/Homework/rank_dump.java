@@ -36,13 +36,13 @@ public class rank_dump {
 		return result;
 	}
 	
-    public void dumpFile(List<DBObject> result) throws IOException {
+    public void rankFile(List<DBObject> result) throws IOException {
         //List<DBObject> result = table.find().toArray();
         
-        File file = new File("C:\\data\\dump_file.json");
+        File file = new File("C:\\data\\dump_rank.json");
         
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        FileOutputStream fos = new FileOutputStream("C:\\data\\dump_file.json");
+        FileOutputStream fos = new FileOutputStream("C:\\data\\dump_rank.json");
         
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
@@ -69,11 +69,11 @@ public class rank_dump {
          db = mongoClient.getDB("crawler");
          table = db.getCollection("ranking");
          
-         java_dump test = new java_dump();
+         rank_dump test = new rank_dump();
          System.out.println("Connected to MongoDB!");
          
          List<DBObject> list = getList(table);
-         test.dumpFile(list);
+         test.rankFile(list);
 
     }
 }

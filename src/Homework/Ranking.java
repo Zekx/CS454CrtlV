@@ -23,21 +23,26 @@ public class Ranking {
 	{
 		
 	}
-	DB database;
-	DBCollection table = database.getCollection("urlpages");
-	DBCollection index = database.getCollection("index");
-	DBCollection freqNum = database.getCollection("ranking");
+	private DB database;
+	public DBCollection table;
+	public DBCollection index;
+	public DBCollection freqNum;
 	
 	public Ranking(DB database) {
 		this.database = database;
+		
+		table = database.getCollection("urlpages");
+		index = database.getCollection("index");
+		freqNum = database.getCollection("ranking");
 	}
 
-
-
 	public void TFIDF ( String term ) {
+		System.out.println("Hello!");
+		
 		DBObject object = index.findOne(new BasicDBObject("word", term));
 		// Will go call the TF method to get the tf number for each document
-		BasicDBList docList = (BasicDBList) object.get("Document"); // JSON Object now
+		BasicDBList docList = (BasicDBList) object.get("document"); // JSON Object now
+		
 		double tfNum,tfidfNum;
 		double idfNum = IDF(docList.size());
 		for (Object docu : docList) {
@@ -71,14 +76,12 @@ public class Ranking {
 	public static void main(String[] args){
 		//Connects to the Mongo Database.
         MongoClient mongoClient = new MongoClient("localhost", 27017);
-        DB db = null;
-        DBCollection table = null;
 
         System.out.println("Establishing connection...");
 
         //Get the connection.
-        db = mongoClient.getDB("crawler");
-        table = db.getCollection("urlpages");
+        DB db = mongoClient.getDB("crawler");
+        DBCollection table = db.getCollection("urlpages");
 
         System.out.println("Connected to MongoDB!");
         
