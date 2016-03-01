@@ -61,6 +61,6 @@ public class Ranking {
 	public double IDF (int listSize) {
 		double docCount = table.count();
 		double logDoc = docCount / (double) listSize;
-		return Math.log(logDoc);
+		return Math.log10(logDoc);
 	}
 }
