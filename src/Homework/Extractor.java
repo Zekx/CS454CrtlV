@@ -33,7 +33,6 @@ import org.xml.sax.SAXException;
 public class Extractor {
     private ArrayList<String> stopWords;
     private ArrayList<String> documentWords;
-    private JSONArray data;
     private JSONObject meta;
     
     public Extractor(){
@@ -46,7 +45,6 @@ public class Extractor {
     		String line = stream.readLine();
 
     	    while (line != null) {
-    	    	System.out.println(line);
     	        stopWords.add(line);
     	        line = stream.readLine();
     	    }
@@ -61,14 +59,14 @@ public class Extractor {
     //Not sure if we should keep track of the count per word
     public JSONArray extract(File file)  throws IOException, SAXException, TikaException
     {
+    	JSONArray data = new JSONArray();
         //I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
         try{
             InputStream stream = new FileInputStream(file);
             BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
             Metadata metadata = new Metadata();
             new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
-
-            data = new JSONArray();
+          
 
             //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
             String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
@@ -125,14 +123,14 @@ public class Extractor {
     }
 
     //This extracts the information to a JSON file
-    public void exportJson(File file, String name, String url, JSONObject metadata, DBCollection table)
+    public void exportJson(File file, String name, String url, JSONArray dataSet, JSONObject metadata, DBCollection table)
     {
         //
         BasicDBObject doc = new BasicDBObject()
                 .append("name", name)
                 .append("url", url)
                 .append("hash", url.hashCode())
-                .append("Document length", data.size())
+                .append("Document length", dataSet.size())
                 .append("metadata", metadata)
                 .append("path", file.toString());
 
@@ -155,17 +153,26 @@ public class Extractor {
             //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
             String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
             for(String s : split){
-            	
-            	if(s.contains("-") || s.matches("^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]")){
+            	if(s.contains("-")){
                 	String[] split2 = s.replaceAll("-", " ").split(" ");
                 	documentWords.add(s.replaceAll("[^a-zA-Z-]+","").toLowerCase());
                 	
                 	for(String t: split2){
-                		if(!t.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(t.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                		if(!t.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("") || !t.equals("-")) documentWords.add(t.replaceAll("[^a-zA-Z]+","").toLowerCase());
                 	}
                 }
                 else{
-                	if(!s.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                	if(s.contains(".")){
+                		if(!s.endsWith(".")){
+                			documentWords.add(s.replaceAll("[^a-zA-Z.//:]+","").toLowerCase());
+                		}
+                		else{
+                			documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                		}
+                	}
+                	else{
+                		if(!s.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+                	}
                 }
 
             }
@@ -205,10 +212,8 @@ public class Extractor {
                 				innerDoc.put("Positions", item.get("Positions") + " " + counter);
                 				innerDoc.put("docHash", urlHash);
             					
-            					System.out.println(entry.get("word"));
             					doc.remove(item);
                 				doc.add(innerDoc);
-                				System.out.println(doc);
                 				
                 				BasicDBObject update = new BasicDBObject();
             					update.put("$set", new BasicDBObject("word", s.toString()));
@@ -223,9 +228,7 @@ public class Extractor {
             				innerDoc.put("Positions", counter);
             				innerDoc.put("docHash", urlHash);
         					
-        					System.out.println(entry.get("word"));
             				doc.add(innerDoc);
-            				System.out.println(doc);
             				
             				BasicDBObject update = new BasicDBObject();
         					update.put("$set", new BasicDBObject("word", s.toString()));

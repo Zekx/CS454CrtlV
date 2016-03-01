@@ -10,6 +10,10 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.imageio.ImageIO;
 
@@ -61,13 +65,15 @@ class Main{
                     u = args[i+1];
                 }
             }
-
-            Crawler crawl = new Crawler();
-            crawl.urlCrawler(u, Integer.parseInt(d), e, 0, 1, db, table);
+            
+            final long startTime = System.currentTimeMillis();
+            WebThreads web = new WebThreads(30, u, Integer.parseInt(d), e);
+            web.run();
 
             System.out.println("\nThe crawler has completed its run!");
+            final long endTime = System.currentTimeMillis();
 
-
+            System.out.println("Total execution time: " + (endTime - startTime));
             mongoClient.close();
         }catch(Exception found){
             System.out.println("The inputted parameters were invalid.");
