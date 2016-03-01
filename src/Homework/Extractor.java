@@ -218,7 +218,6 @@ public class Extractor {
                 				BasicDBObject update = new BasicDBObject();
             					update.put("$set", new BasicDBObject("word", s.toString()));
             					update.put("$set", new BasicDBObject("document", doc));
-                				
                 				index.update(new BasicDBObject("word", s.toString()), update);
                 				docUpdate = true;
             				}	       					
