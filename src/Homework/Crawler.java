@@ -33,7 +33,6 @@ import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
 public class Crawler implements Runnable{
-	ExecutorService exe = Executors.newFixedThreadPool(3);
 	WebThreads web;
     
     public Crawler(WebThreads wb){
@@ -53,13 +52,15 @@ public class Crawler implements Runnable{
                     doc = connection.get();
                     
                     if (doc != null) {
-                        Elements allLinks = doc.select("a[href]");
-                        for (Element link : allLinks) {
-                            if (link != null) {
-                                if (!web.visitedAlready.contains(link.attr("abs:href"))) {
-                                	incoming.add(link.attr("abs:href"));
-                                }
-                            }
+                        	Elements allLinks = doc.select("a[href]");
+                            for (Element link : allLinks) {
+                                if (link != null) {
+                                    synchronized(web.lock){
+                                    	if (!web.visitedAlready.contains(link.attr("abs:href"))) {
+                                        	incoming.add(link.attr("abs:href"));
+                                    }
+                                 }
+                             }
                         }
                     }
                     synchronized(web.lock){
@@ -78,10 +79,9 @@ public class Crawler implements Runnable{
                     	JSONArray dataSet = ext.extract(file);
 
                         JSONObject metadata = ext.extractMeta(file);
-
+                        
                         ext.exportJson(file, htmlTitle, url, dataSet, metadata, table);
-                        //Indexer.run(file.toString().replace("\\", "/"));
-                        ext.indexTerms(db, url.hashCode(), file);
+                        ext.indexTerms(db, url.hashCode(), file, this.web);
                     }
                     
                     //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
@@ -144,14 +144,14 @@ public class Crawler implements Runnable{
 	                e.printStackTrace();
 	            }
 	            synchronized(web.lock){
-	            	//This page has fully been visited.
-	            	web.levelSize = web.levelSize - 1;
-	            	
 	            	for(String str: incomingURL){
 	            		if(!web.visitedAlready.contains(str)){
 	            			web.goingToVisit.add(str);
 	            		}
 	            	}
+	            	
+	            	//This page has fully been visited.
+	            	web.levelSize = web.levelSize - 1;
 	
 	                //Checks to see if the next tier is coming based on the current tier's total queue list size.
 	                if (web.levelSize == 0) {
@@ -160,6 +160,8 @@ public class Crawler implements Runnable{
 	                }
 	         }
         }
+	    
+	   System.out.println(web.goingToVisit.size());
     }
     
     

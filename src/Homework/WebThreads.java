@@ -1,10 +1,13 @@
 package Homework;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import com.mongodb.DB;
@@ -15,7 +18,7 @@ public class WebThreads implements Runnable{
 	private List<Thread> threads;
 	
 	public BlockingQueue<String> goingToVisit;
-	public BlockingQueue<String> visitedAlready;
+	public Set<String> visitedAlready;
 	
 	public String url = "";
     
@@ -34,7 +37,7 @@ public class WebThreads implements Runnable{
     	goingToVisit = new LinkedBlockingDeque<String>();
     	goingToVisit.add(this.url);
     	
-    	visitedAlready = new LinkedBlockingDeque<String>();
+    	visitedAlready = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
     	
     	this.threads = new ArrayList<Thread>();
     	for(int i = 0; i < threads; i++){
@@ -56,6 +59,13 @@ public class WebThreads implements Runnable{
 					i = 0;
 					threadsDone = false;
 				}
+			}
+		}
+		for(Thread t: threads){
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 	}

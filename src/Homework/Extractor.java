@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mchange.v1.util.ArrayUtils;
 import com.mongodb.BasicDBList;
@@ -137,7 +138,7 @@ public class Extractor {
         table.insert(doc);
     }
     
-    public void indexTerms(DB db, int urlHash, File file) throws InterruptedException{
+    public void indexTerms(DB db, int urlHash, File file, WebThreads web) throws InterruptedException{
     	DBCollection table = db.getCollection("urlpages");
     	DBCollection index = db.getCollection("index");
     	documentWords = new ArrayList<String>();
@@ -202,9 +203,13 @@ public class Extractor {
         				JSONObject innerDoc = new JSONObject();
         				Boolean docUpdate = false;
         				
-        				Iterator<Object> itr = doc.iterator();
-        				while(itr.hasNext()){
-        					BasicDBObject item = (BasicDBObject) itr.next();
+        				CopyOnWriteArrayList<Object> arr = new CopyOnWriteArrayList<Object>();
+        				for(int i = 0; i < doc.size(); i++){
+        					arr.add(doc.get(i));
+        				}
+
+        				for(Object docu: arr){
+        					BasicDBObject item = (BasicDBObject) docu;
         					
         					if((int)item.get("docHash") == urlHash){     
         						int freq = Integer.parseInt(item.get("Frequency").toString()) + 1;
