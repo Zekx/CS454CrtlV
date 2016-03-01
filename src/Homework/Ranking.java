@@ -34,17 +34,21 @@ public class Ranking {
 		DBObject object = index.findOne(new BasicDBObject("word", term));
 		// Will go call the TF method to get the tf number for each document
 		BasicDBList docList = (BasicDBList) object.get("Document"); // JSON Object now
-		BasicDBList freqList = (BasicDBList) docList.get("Frequency");
 		double tfNum,tfidfNum;
 		double idfNum = IDF(docList.size());
-		for (int i = 0; i < docList.size(); i ++ ) {
-			JSONObject currObj = (JSONObject) docList.get(i);
-			int docSize = (int) table.findOne(new BasicDBObject("hash", currObj.get("docHash"))).get("Document length");
-			tfNum = TF((int) currObj.get("Frequency"), docSize);
+		for (Object docu : docList) {
+			BasicDBObject obj = (BasicDBObject) docu;
+			int wordCount = Integer.parseInt(obj.get("Frequency").toString());
+			int docSize = Integer.parseInt(table.findOne(new BasicDBObject("hash",
+					obj.get("docHash"))).get("Document length").toString());
+			tfNum = TF(wordCount, docSize);
 			tfidfNum = tfNum * idfNum;
+			
+			BasicDBObject tfRankObj = new BasicDBObject()
+					.append("docHash", obj.get("docHash"))
+					.append("TFIDF", tfidfNum);
+			freqNum.insert(tfRankObj);
 		}
-		// Call IDF method to get the IDF number
-		
 		
 	}
 	
