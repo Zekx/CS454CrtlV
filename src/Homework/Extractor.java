@@ -202,8 +202,9 @@ public class Extractor {
         				JSONObject innerDoc = new JSONObject();
         				Boolean docUpdate = false;
         				
-        				for(Object docu: doc){
-        					BasicDBObject item = (BasicDBObject) docu;
+        				Iterator<Object> itr = doc.iterator();
+        				while(itr.hasNext()){
+        					BasicDBObject item = (BasicDBObject) itr.next();
         					
         					if((int)item.get("docHash") == urlHash){     
         						int freq = Integer.parseInt(item.get("Frequency").toString()) + 1;

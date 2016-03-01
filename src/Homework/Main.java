@@ -29,6 +29,8 @@ import org.jsoup.select.Elements;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 class Main{
@@ -67,13 +69,14 @@ class Main{
             }
             
             final long startTime = System.currentTimeMillis();
-            WebThreads web = new WebThreads(30, u, Integer.parseInt(d), e);
+            WebThreads web = new WebThreads(20, u, Integer.parseInt(d), e);
             web.run();
 
             System.out.println("\nThe crawler has completed its run!");
             final long endTime = System.currentTimeMillis();
 
             System.out.println("Total execution time: " + (endTime - startTime));
+            
             mongoClient.close();
         }catch(Exception found){
             System.out.println("The inputted parameters were invalid.");

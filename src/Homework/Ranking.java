@@ -1,7 +1,11 @@
 package Homework;
 
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -62,5 +66,34 @@ public class Ranking {
 		double docCount = table.count();
 		double logDoc = docCount / (double) listSize;
 		return Math.log(logDoc);
+	}
+	
+	public static void main(String[] args){
+		//Connects to the Mongo Database.
+        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        DB db = null;
+        DBCollection table = null;
+
+        System.out.println("Establishing connection...");
+
+        //Get the connection.
+        db = mongoClient.getDB("crawler");
+        table = db.getCollection("urlpages");
+
+        System.out.println("Connected to MongoDB!");
+        
+        Ranking ranker = new Ranking(db);
+        ranker.TFIDF("google");
+		
+//        List<DBObject> result = new ArrayList<DBObject>();
+//		DBObject sample = new BasicDBObject();
+//		DBObject removeID = new BasicDBObject("_id", 0);
+//		
+//		DBCursor cursor = table.find(sample, removeID);
+//		
+//		while(cursor.hasNext())
+//		{
+//			result.add(cursor.next());
+//		}
 	}
 }
