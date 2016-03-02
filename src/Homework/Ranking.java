@@ -53,11 +53,15 @@ public class Ranking {
 	public JSONArray convertToJSONArray(Set<String> set)
 	{
 		JSONArray arr = new JSONArray();
-		for (String s: set)
+		if(set != null || !set.isEmpty())
 		{
-			arr.add(s);
+			for (String s: set)
+			{
+				arr.add(s);
+			}
 		}
 		return arr;
+		
 	}
 	
 	public List<String> convertToArrayList(BasicDBList bdba)
@@ -88,7 +92,7 @@ public class Ranking {
 			List<String> tempArr = convertToArrayList((BasicDBList) temp.get("links"));
 
 			urlList.add(temp.get("url").toString());
-			
+						
 			//adding to htOut ( Table of pages that link out )
 			htOut.put(temp.get("url").toString(), convertToSet((BasicDBList) temp.get("links")));
 			
@@ -97,38 +101,33 @@ public class Ranking {
 			{
 				for(int i = 0; i < tempArr.size(); i ++)
 				{
-					
-					if(!htIn.containsKey(temp.get("url").toString()))
+					if(!tempArr.get(i).isEmpty())
 					{
-						Set<String> tempSet = new HashSet<String>();
-						tempSet.add(tempArr.get(i));
-						htIn.put(temp.get("url").toString(), tempSet);
-					}
-					else
-					{
-						Set<String> tempSet = (Set<String>) htIn.get(temp.get("url"));
-						tempSet.add(tempArr.get(i));
-						htIn.put(temp.get("url").toString(), tempSet);
+						if(!htIn.containsKey(tempArr.get(i)))
+						{
+							Set<String> tempSet = new HashSet<String>();
+							tempSet.add(temp.get("url").toString());
+							htIn.put(tempArr.get(i), tempSet);
+						}
+						else
+						{
+							Set<String> tempSet = (Set<String>) htIn.get(tempArr.get(i));
+							tempSet.add(temp.get("url").toString());
+							htIn.put(tempArr.get(i), tempSet);
+						}
 					}
 				}
 			}
-			else
-			{
-				if(!htIn.containsKey(temp.get("url").toString()))
-				{
-					Set<String> tempSet = new HashSet<String>();
-					htIn.put(temp.get("url").toString(), tempSet);
-			
-				}
-
-			}
-			
 		}
 		//Calculation
 		Hashtable<String, Double> valueNew = new Hashtable<String, Double>();
 
+		//constant
+		double lambda = 0.15; 
+		double randomJumpFactor = lambda/urlList.size();
+
 		
-		//This is setting value for the first
+		//This is setting value for the urls
 		double normal = 1.0/urlList.size();
 		System.out.println(normal);
 		
@@ -139,23 +138,33 @@ public class Ranking {
 		
 		Hashtable<String, Double> valueOld = valueNew;
 		
-		//This is for the next 2 iterations
-		int counter = 1;
-		while(counter < 2)
+		//This is for the 3 iterations
+		int counter = 0;
+		while(counter < 3)
 		{
 			for(int k = 0; k < urlList.size(); k ++)
 			{
-				Set<String> linked = (Set<String>) htIn.get(urlList.get(k));
-				double sum = 0;
-				for(String s : linked)
+				if(htIn.get(urlList.get(k)) != null)
 				{
-					if(!s.equals(urlList.get(k))) //If the page is not linking itself
+					Set<String> linked = (Set<String>) htIn.get(urlList.get(k));
+					double sum = 0;
+					if(linked != null || !linked.isEmpty())
 					{
-						Set<String> size = (Set<String>) htOut.get(urlList.get(k));
-						sum =+ (double) valueOld.get(urlList.get(k))/size.size();
+						
+						
+						for(String s : linked)
+						{
+							if(!s.equals(urlList.get(k)) || !s.isEmpty()) //If the page is not linking itself
+							{
+								Set<String> size = (Set<String>) htOut.get(s);
+								System.out.println("Sum: " +sum + "\nValueOld: " +valueOld.get(urlList.get(k)) + "\nSize: " + size.size() + "\nAdded value: " +(double) valueOld.get(urlList.get(k))/size.size());
+								sum = sum + (double) valueOld.get(urlList.get(k))/size.size();
+								System.out.println("After sum: " + sum + "\n==========\n");
+							}
+						}
+						valueNew.put(urlList.get(k), randomJumpFactor + (1 - lambda)* sum);
 					}
 				}
-				valueNew.put(urlList.get(k), sum);
 			}
 			valueOld = valueNew;
 			
@@ -167,10 +176,16 @@ public class Ranking {
 		
 		for(int x = 0; x < urlList.size(); x++)
 		{
+			Set<String> set = new HashSet<String>();
+			if(htIn.get(urlList.get(x)) != null)
+			{
+				set = (Set<String>) htIn.get(urlList.get(x));
+			}
+			
 			BasicDBObject object = new BasicDBObject()
 					.append("url", urlList.get(x))
 					.append("Links out", convertToJSONArray((Set<String>) htOut.get(urlList.get(x))).size())
-					.append("Link in", convertToJSONArray((Set<String>) htIn.get(urlList.get(x))).size())
+					.append("Link in", convertToJSONArray(set).size())
 					.append("PageRank Value", valueNew.get(urlList.get(x))); 
 			pagerank.insert(object);
 		}
@@ -231,8 +246,8 @@ public class Ranking {
         System.out.println("Connected to MongoDB!");
         
         Ranking ranker = new Ranking(db);
-        ranker.TFIDF("google");
         ranker.link_analysis();
+        ranker.TFIDF("google");
 		
         
 //        List<DBObject> result = new ArrayList<DBObject>();
