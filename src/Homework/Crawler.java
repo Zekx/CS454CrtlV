@@ -80,7 +80,7 @@ public class Crawler implements Runnable{
 
                         JSONObject metadata = ext.extractMeta(file);
                         
-                        ext.exportJson(file, htmlTitle, url, dataSet, metadata, table);
+                        ext.exportJson(file, htmlTitle, url, dataSet, metadata, table, ext.getLinks(url, metadata.get("Content-Encoding").toString() ,file));
                         ext.indexTerms(db, url.hashCode(), file, this.web);
                     }
                     

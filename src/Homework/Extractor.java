@@ -21,6 +21,10 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.TeeContentHandler;
 import org.json.simple.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.json.simple.JSONArray;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -122,9 +126,23 @@ public class Extractor {
 
         return meta;
     }
-
+    
+    public JSONArray getLinks(String url, String uri, File file) throws IOException
+    {
+    	JSONArray arr = new JSONArray();
+    	Document doc = Jsoup.parse(file, uri, url);
+    	
+    	Elements allLinks = doc.select("a[href]");
+        for (Element link : allLinks) {
+            if (link != null) 
+            {
+            	arr.add(link.absUrl("href"));
+            }
+        }
+    	return arr;
+    }
     //This extracts the information to a JSON file
-    public void exportJson(File file, String name, String url, JSONArray dataSet, JSONObject metadata, DBCollection table)
+    public void exportJson(File file, String name, String url, JSONArray dataSet, JSONObject metadata, DBCollection table, JSONArray arr)
     {
         //
         BasicDBObject doc = new BasicDBObject()
@@ -133,7 +151,9 @@ public class Extractor {
                 .append("hash", url.hashCode())
                 .append("Document length", dataSet.size())
                 .append("metadata", metadata)
-                .append("path", file.toString());
+                .append("path", file.toString())
+                .append("links", arr)
+                .append("# of links", arr.size());
 
         table.insert(doc);
     }

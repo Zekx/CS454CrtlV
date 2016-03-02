@@ -36,13 +36,11 @@ public class rank_dump {
 		return result;
 	}
 	
-    public void rankFile(List<DBObject> result) throws IOException {
+    public void rankFile(List<DBObject> result, File file) throws IOException {
         //List<DBObject> result = table.find().toArray();
-        
-        File file = new File("C:\\data\\dump_rank.json");
-        
+                
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        FileOutputStream fos = new FileOutputStream("C:\\data\\dump_rank.json");
+        FileOutputStream fos = new FileOutputStream(file	);
         
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
@@ -62,18 +60,30 @@ public class rank_dump {
     	 MongoClient mongoClient = new MongoClient("localhost", 27017);
          DB db = null;
          DBCollection table = null;
+         DBCollection table2 = null;
 
          System.out.println("Establishing connection...");
 
          //Get the connection.
          db = mongoClient.getDB("crawler");
          table = db.getCollection("ranking");
+         table2 = db.getCollection("pagerank");
+         
+         if(!db.collectionExists("pagerank"))
+         {
+        	 db.createCollection("pagerank", null);
+         }
          
          rank_dump test = new rank_dump();
          System.out.println("Connected to MongoDB!");
          
+         
+         File file = new File("C:\\data\\dump_rank.json");
          List<DBObject> list = getList(table);
-         test.rankFile(list);
+         test.rankFile(list, file);
 
+         File file2 = new File("C:\\data\\page_rank.json");
+         List<DBObject> list2 = getList(table2);
+         test.rankFile(list2, file2);
     }
 }
