@@ -78,6 +78,7 @@ public class Ranking {
 	{	
 		Hashtable<String, Object> htOut = new Hashtable<String, Object>();
 		Hashtable<String, Object> htIn = new Hashtable<String, Object>();
+		Hashtable<String, String> htHashValue = new Hashtable<String, String>();
 		
 		List<String> urlList = new ArrayList<String>();
 		
@@ -92,6 +93,7 @@ public class Ranking {
 			List<String> tempArr = convertToArrayList((BasicDBList) temp.get("links"));
 
 			urlList.add(temp.get("url").toString());
+			htHashValue.put(temp.get("url").toString(), temp.get("hash").toString());
 						
 			//adding to htOut ( Table of pages that link out )
 			htOut.put(temp.get("url").toString(), convertToSet((BasicDBList) temp.get("links")));
@@ -184,6 +186,7 @@ public class Ranking {
 			
 			BasicDBObject object = new BasicDBObject()
 					.append("url", urlList.get(x))
+					.append("Hash", htHashValue.get(urlList.get(x)))
 					.append("Links out", convertToJSONArray((Set<String>) htOut.get(urlList.get(x))).size())
 					.append("Link in", convertToJSONArray(set).size())
 					.append("PageRank Value", valueNew.get(urlList.get(x))); 
