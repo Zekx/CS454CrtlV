@@ -74,6 +74,34 @@ public class Ranking {
 		return returnURL;
 	}
 	
+	public Hashtable<String, Double> normalize(List<String> urlList, Hashtable<String, Double> htValue)
+	{
+		double max = 0;
+		double min = 0;
+		
+		Hashtable<String, Double> htValueNew = new Hashtable<String, Double>();
+		
+		for(int i = 0; i < urlList.size(); i++)
+		{
+			if(htValue.get(urlList.get(i)) > max)
+			{
+				max = htValue.get(urlList.get(i));
+			}
+			if(htValue.get(urlList.get(i)) < min)
+			{
+				min = htValue.get(urlList.get(i));
+			}
+		}
+		
+		for(int j = 0; j < urlList.size(); j++)
+		{
+			double normalizeValue = Math.abs( (htValue.get(urlList.get(j)) - min) / (max - min) );
+			htValueNew.put(urlList.get(j), normalizeValue);
+		}
+		
+		return htValueNew;
+	}
+	
 	public void link_analysis()
 	{	
 		Hashtable<String, Object> htOut = new Hashtable<String, Object>();
@@ -175,6 +203,7 @@ public class Ranking {
 		
 		DBCollection pagerank = database.getCollection("pagerank");
 		
+		valueNew = normalize(urlList, valueNew);
 		
 		for(int x = 0; x < urlList.size(); x++)
 		{
@@ -196,7 +225,6 @@ public class Ranking {
 
         System.out.print("Finished!");
 	}
-	
 	
 
 	public void TFIDF ( String term ) {
