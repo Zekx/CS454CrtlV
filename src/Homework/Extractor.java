@@ -134,10 +134,7 @@ public class Extractor {
     	
     	Elements allLinks = doc.select("a[href]");
         for (Element link : allLinks) {
-            if (link != null) 
-            {
-            	arr.add(link.absUrl("href"));
-            }
+        	arr.add(link.absUrl("href"));
         }
     	return arr;
     }
@@ -149,7 +146,7 @@ public class Extractor {
                 .append("name", name)
                 .append("url", url)
                 .append("hash", url.hashCode())
-                .append("Document length", dataSet.size())
+                .append("DocumentLength", dataSet.size())
                 .append("metadata", metadata)
                 .append("path", file.toString())
                 .append("links", arr)
@@ -158,7 +155,7 @@ public class Extractor {
         table.insert(doc);
     }
     
-    public void indexTerms(DB db, int urlHash, File file, WebThreads web) throws InterruptedException{
+    public void indexTerms(DB db, int urlHash, File file) throws InterruptedException{
     	DBCollection table = db.getCollection("urlpages");
     	DBCollection index = db.getCollection("index");
     	documentWords = new ArrayList<String>();

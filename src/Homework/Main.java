@@ -68,6 +68,9 @@ class Main{
                 }
             }
             
+            db.getCollection("urlpages").drop();
+            db.getCollection("index").drop();
+            
             final long startTime = System.currentTimeMillis();
             WebThreads web = new WebThreads(5, u, Integer.parseInt(d), e);
             web.run();

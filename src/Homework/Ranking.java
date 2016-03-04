@@ -7,11 +7,13 @@ import com.mongodb.DBObject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.json.simple.JSONArray;
-import org.json.JSONObject;
+import org.json.simple.JSONObject;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -35,7 +37,6 @@ public class Ranking {
 		
 		table = database.getCollection("urlpages");
 		index = database.getCollection("index");
-		freqNum = database.getCollection("ranking");
 	}
 
 	
@@ -118,6 +119,7 @@ public class Ranking {
 		while(cursor.hasNext())
 		{
 			DBObject temp = cursor.next();
+			System.out.println(temp.get("name"));
 			List<String> tempArr = convertToArrayList((BasicDBList) temp.get("links"));
 
 			urlList.add(temp.get("url").toString());
@@ -234,20 +236,40 @@ public class Ranking {
 		// Will go call the TF method to get the tf number for each document
 		BasicDBList docList = (BasicDBList) object.get("document"); // JSON Object now
 		
+		CopyOnWriteArrayList<Object> arr = new CopyOnWriteArrayList<Object>();
+		for(int i = 0; i < docList.size(); i++){
+			arr.add(docList.get(i));
+		}
+		
 		double tfNum,tfidfNum;
 		double idfNum = IDF(docList.size());
-		for (Object docu : docList) {
+		for (Object docu : arr) {
 			BasicDBObject obj = (BasicDBObject) docu;
+			JSONObject update = new JSONObject();
+			
 			int wordCount = Integer.parseInt(obj.get("Frequency").toString());
-			int docSize = Integer.parseInt(table.findOne(new BasicDBObject("hash",
-					obj.get("docHash"))).get("Document length").toString());
+			DBObject oldItem = table.findOne(new BasicDBObject("hash", obj.get("docHash")));
+			System.out.println(obj.get("docHash").toString());
+			
+			int docSize = Integer.parseInt(oldItem.get("DocumentLength").toString());
+			//System.out.println(docSize);
 			tfNum = TF(wordCount, docSize);
 			tfidfNum = tfNum * idfNum;
 			
-			BasicDBObject tfRankObj = new BasicDBObject()
-					.append("docHash", obj.get("docHash"))
-					.append("TFIDF", tfidfNum);
-			freqNum.insert(tfRankObj);
+			update.put("Frequency", Integer.parseInt((obj.get("Frequency").toString())));
+			update.put("Positions", obj.get("Positions").toString());
+			update.put("docHash", obj.get("docHash").toString());
+			update.put("tfidf", tfidfNum);
+			System.out.println(obj.get("docHash") + ": " + tfidfNum);
+			
+			docList.remove(obj);
+			docList.add(update);
+			
+			BasicDBObject updateColl = new BasicDBObject();
+			updateColl.put("$set", new BasicDBObject("word", term));
+			updateColl.put("$set", new BasicDBObject("document", docList));
+			
+			index.update(new BasicDBObject("word", term), updateColl);
 		}
 		
 	}
@@ -275,10 +297,11 @@ public class Ranking {
         DBCollection table = db.getCollection("urlpages");
 
         System.out.println("Connected to MongoDB!");
+        db.getCollection("pagerank").drop();
         
         Ranking ranker = new Ranking(db);
         ranker.link_analysis();
-        ranker.TFIDF("google");
+        ranker.TFIDF("irwin");
 		
         
 //        List<DBObject> result = new ArrayList<DBObject>();
