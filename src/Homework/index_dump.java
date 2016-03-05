@@ -22,7 +22,6 @@ public class index_dump
         List<DBObject> result = table.find().toArray();
         File file = new File("C:\\data\\dump_index.json");
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        FileOutputStream fos = new FileOutputStream("C:\\data\\dump_index.json");
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
 

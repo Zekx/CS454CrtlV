@@ -243,24 +243,47 @@ public class Ranking {
 		
 		double tfNum,tfidfNum;
 		double idfNum = IDF(docList.size());
-		for (Object docu : arr) {
+		
+		Hashtable<String, Double> tfidfValue = new Hashtable<String, Double>();
+		List<String> hashList = new ArrayList<String>();
+		
+		for( Object docu : arr )
+		{
 			BasicDBObject obj = (BasicDBObject) docu;
-			JSONObject update = new JSONObject();
 			
 			int wordCount = Integer.parseInt(obj.get("Frequency").toString());
 			DBObject oldItem = table.findOne(new BasicDBObject("hash", obj.get("docHash")));
-			System.out.println(obj.get("docHash").toString());
+			hashList.add(obj.get("docHash").toString());
 			
 			int docSize = Integer.parseInt(oldItem.get("DocumentLength").toString());
 			//System.out.println(docSize);
 			tfNum = TF(wordCount, docSize);
 			tfidfNum = tfNum * idfNum;
 			
+			tfidfValue.put(obj.get("docHash").toString(), tfidfNum);
+			
+		}
+		
+		Hashtable<String, Double> norTFIDF = normalize(hashList, tfidfValue);
+		
+		for (Object docu : arr) {
+			BasicDBObject obj = (BasicDBObject) docu;
+			JSONObject update = new JSONObject();
+			
+			/*int wordCount = Integer.parseInt(obj.get("Frequency").toString());
+			DBObject oldItem = table.findOne(new BasicDBObject("hash", obj.get("docHash")));
+			System.out.println(obj.get("docHash").toString());
+			
+			int docSize = Integer.parseInt(oldItem.get("DocumentLength").toString());
+			//System.out.println(docSize);
+			tfNum = TF(wordCount, docSize);
+			tfidfNum = tfNum * idfNum;*/
+			
 			update.put("Frequency", Integer.parseInt((obj.get("Frequency").toString())));
 			update.put("Positions", obj.get("Positions").toString());
 			update.put("docHash", obj.get("docHash").toString());
-			update.put("tfidf", tfidfNum);
-			System.out.println(obj.get("docHash") + ": " + tfidfNum);
+			update.put("tfidf", norTFIDF.get(obj.get("docHash").toString()));
+			//System.out.println(obj.get("docHash") + ": " + tfidfNum);
 			
 			docList.remove(obj);
 			docList.add(update);

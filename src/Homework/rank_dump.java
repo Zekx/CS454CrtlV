@@ -40,7 +40,6 @@ public class rank_dump {
         //List<DBObject> result = table.find().toArray();
                 
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        FileOutputStream fos = new FileOutputStream(file	);
         
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();

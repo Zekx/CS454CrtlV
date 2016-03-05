@@ -44,7 +44,6 @@ public class java_dump
         File file = new File("C:\\data\\dump_file.json");
         
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        FileOutputStream fos = new FileOutputStream("C:\\data\\dump_file.json");
         
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
