@@ -97,6 +97,41 @@ public class DesktopCrawler implements Runnable{
 	            				.replace("%5D", "]")
 	            				.replace("%5E", "^")
 	            				.replace("%5F", "_")
+	            				.replace("%C3%80", "À")
+	            				.replace("%C3%81", "Á")
+	            				.replace("%C3%82", "Â")
+	            				.replace("%C3%83", "Ã")
+	            				.replace("%C3%84", "Ä")
+	            				.replace("%C3%85", "Å")
+	            				.replace("%C3%86", "Æ")
+	            				.replace("%C3%87", "Ç")
+	            				.replace("%C3%88", "È")
+	            				.replace("%C3%89", "É")
+	            				.replace("%C3%8A", "Ê")
+	            				.replace("%C3%8B", "Ë")
+	            				.replace("%C3%8C", "Ì")
+	            				.replace("%C3%8D", "Í")
+	            				.replace("%C3%8E", "Î")
+	            				.replace("%C3%8F", "Ï")
+	            				.replace("%C3%A1", "á")
+	            				.replace("%C3%A2", "â")
+	            				.replace("%C3%A3", "ã")
+	            				.replace("%C3%A4", "ä")
+	            				.replace("%C3%A5", "å")
+	            				.replace("%C3%A6", "æ")
+	            				.replace("%C3%A7", "ç")
+	            				.replace("%C3%A8", "è")
+	            				.replace("%C3%A9", "é")
+	            				.replace("%C3%AA", "ê")
+	            				.replace("%C3%AB", "ë")
+	            				.replace("%C3%AC", "ì")
+	            				.replace("%C3%AD", "í")
+	            				.replace("%C3%AE", "î")
+	            				.replace("%C3%AF", "ï")
+	            				.replace("%E2%80%98", "‘")
+	            				.replace("%E2%80%99", "’")
+	            				.replace("%E2%80%9C", "“")
+	            				.replace("%E2%80%9D", "”")
 	            				.replace("%60", "`")
 	            				.getBytes("UTF-8"));
 	            		
@@ -145,12 +180,14 @@ public class DesktopCrawler implements Runnable{
 	                    	String nexturl = url + "/" + file.getName();
 	                    	crawlFiles(file.listFiles(), ext, db, table, nexturl);
 
-	                    } else {
+	                    } else {    	
 	                    	try{
 	                    		
 	                    	}catch(Exception e){
 	                    		e.printStackTrace();
 	                    	}
+	                    	
+	                    	
 	                    	if(!desk.visitedAlready.contains(url+"/"+file.getName())){
 	                    		synchronized(desk.lock){
 	                    			desk.visitedAlready.add(url+"/"+file.getName());
@@ -161,7 +198,7 @@ public class DesktopCrawler implements Runnable{
 		                        JSONObject metadata = ext.extractMeta(file);
 		                        
 		                        ext.exportJson(file, file.getName(), url+"/"+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
-		                        ext.indexTerms(db, file.toString().hashCode(), file);
+		                        ext.indexTerms(db, ext.SHA256Converter(url+"/"+file.getName()), file);
 		                        System.out.println(desk.visitedAlready.size());
 	                    	}
 	                    }
@@ -194,7 +231,7 @@ public class DesktopCrawler implements Runnable{
 	        Extractor ext = new Extractor();
 	        File[] files = new File("C:/data/en").listFiles();
 	        
-	        DeskThreads desk = new DeskThreads(10, files, ext, "http://www.ctrlv.com/en");
+	        DeskThreads desk = new DeskThreads(5, files, ext, "http://www.ctrlv.com/en");
 	        desk.run();
 
 	        Ranking ranker = new Ranking(db);
