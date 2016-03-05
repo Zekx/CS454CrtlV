@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -34,7 +35,30 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;
 
-public class DesktopCrawler {	
+public class DesktopCrawler implements Runnable{
+		DeskThreads desk;
+	
+		public DesktopCrawler(DeskThreads desk){
+			this.desk = desk;
+		}
+		
+		@Override
+		public void run(){
+			//Connects to the Mongo Database.
+	        MongoClient mongoClient = new MongoClient("localhost", 27017);
+	        DB db = null;
+
+	        System.out.println("Establishing connection...");
+
+	        //Get the connection.
+	        db = mongoClient.getDB("crawler");
+	        DBCollection table = db.getCollection("urlpages");
+			DBCollection index = db.getCollection("index");
+			DBCollection pageRank = db.getCollection("pagerank");
+			
+			this.crawlFiles(desk.file, desk.ext, db, table, desk.url);
+		}
+
 		public static JSONArray getLinks(String url, String uri, File file) throws IOException
 	    {
 	    	JSONArray arr = new JSONArray();
@@ -77,14 +101,14 @@ public class DesktopCrawler {
 	            		}
 	            		finalizedurl = finalizedurl + "/" + refinedUrl;
 	            		arr.add(finalizedurl);
-	            		System.out.println(finalizedurl);
+	            		//System.out.println(finalizedurl);
 	            	}
 	            }
 	        }
 	    	return arr;
 	    }
 	
-	    public static void crawlFiles(File[] files, Extractor ext,DB db, DBCollection table, String url) {
+		public void crawlFiles(File[] files, Extractor ext,DB db, DBCollection table, String url) {
 	        if (files != null) {
 	           
 	            for (File file : files) {
@@ -102,12 +126,18 @@ public class DesktopCrawler {
 	                    	}catch(Exception e){
 	                    		e.printStackTrace();
 	                    	}
-	                    	JSONArray dataSet = ext.extract(file);
+	                    	if(!desk.visitedAlready.contains(url+file.getName())){
+	                    		synchronized(desk.lock){
+	                    			desk.visitedAlready.add(url+file.getName());
+	                    		}
+	                    		JSONArray dataSet = ext.extract(file);
 
-	                        JSONObject metadata = ext.extractMeta(file);
-	                        
-	                        ext.exportJson(file, file.getName(), url+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
-	                        ext.indexTerms(db, file.toString().hashCode(), file);
+		                        JSONObject metadata = ext.extractMeta(file);
+		                        
+		                        ext.exportJson(file, file.getName(), url+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
+		                        ext.indexTerms(db, file.toString().hashCode(), file);
+		                        System.out.println(desk.visitedAlready.size());
+	                    	}
 	                    }
 
 	                } catch (Exception e) {
@@ -137,7 +167,9 @@ public class DesktopCrawler {
 	        
 	        Extractor ext = new Extractor();
 	        File[] files = new File("C:/data/en").listFiles();
-	        crawlFiles(files, ext, db, table, "http://www.ctrlv.com/en");
+	        
+	        DeskThreads desk = new DeskThreads(15, files, ext, "http://www.ctrlv.com/en");
+	        desk.run();
 
 	        Ranking ranker = new Ranking(db);
 	        ranker.link_analysis();

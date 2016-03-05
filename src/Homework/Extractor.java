@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
  */
 public class Extractor {
     private ArrayList<String> stopWords;
-    private ArrayList<String> documentWords;
+    private CopyOnWriteArrayList<String> documentWords;
     private JSONObject meta;
     
     public Extractor(){
@@ -158,7 +158,7 @@ public class Extractor {
     public void indexTerms(DB db, int urlHash, File file) throws InterruptedException{
     	DBCollection table = db.getCollection("urlpages");
     	DBCollection index = db.getCollection("index");
-    	documentWords = new ArrayList<String>();
+    	documentWords = new CopyOnWriteArrayList<String>();
     	
     	//I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
         try{
@@ -194,9 +194,10 @@ public class Extractor {
                 }
 
             }
+            Iterator<String> iter = documentWords.iterator();
             
-            for(String s : documentWords){  
-  		
+            while(iter.hasNext()){  
+            	String s = iter.next();
         		if(!this.stopWords.contains(s)){
         			if(index.findOne(new BasicDBObject("word",s.toString())) == null){
         				JSONArray doc = new JSONArray();
