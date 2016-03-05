@@ -62,7 +62,7 @@ public class DesktopCrawler implements Runnable{
 		public static JSONArray getLinks(String url, String uri, File file) throws IOException
 	    {
 	    	JSONArray arr = new JSONArray();
-	    	Document doc = Jsoup.parse(file, uri, url);
+	    	Document doc = Jsoup.parse(file, "ISO-8859-1", url);
 	    	
 	    	Elements allLinks = doc.select("a[href]");
 	    	//System.out.println(url);
@@ -74,7 +74,31 @@ public class DesktopCrawler implements Runnable{
 	            		int counter = 0;
 	            		String[] split1 = link.attr("href").split("/");
 	            		//System.out.println(link.attr("href"));
-	            		String refinedUrl = link.attr("href").replace("../", "");
+	            		String refinedUrl = new String(link.attr("href")
+	            				.replace("../", "")
+	            				.replace("%7E", "~")
+	            				.replace("%21", "!")
+	            				.replace("%22", "\"")
+	            				.replace("%23", "#")
+	            				.replace("%24", "$")
+	            				.replace("%25", "%")
+	            				.replace("%26", "&")
+	            				.replace("%27", "'")
+	            				.replace("%28", "(")
+	            				.replace("%29", ")")
+	            				.replace("%2A", "*")
+	            				.replace("%2B", "+")
+	            				.replace("%2C", ",")
+	            				.replace("%2D", "-")
+	            				.replace("%2E", ".")
+	            				.replace("%2F", "/")
+	            				.replace("%5B", "[")
+	            				.replace("%5C", "\\")
+	            				.replace("%5D", "]")
+	            				.replace("%5E", "^")
+	            				.replace("%5F", "_")
+	            				.replace("%60", "`")
+	            				.getBytes("UTF-8"));
 	            		
 	            		for(String s: split1){
 	            			//System.out.println(s);
@@ -100,7 +124,8 @@ public class DesktopCrawler implements Runnable{
 	            			}
 	            		}
 	            		finalizedurl = finalizedurl + "/" + refinedUrl;
-	            		arr.add(finalizedurl);
+	            		//System.out.println(new String(finalizedurl.getBytes("UTF-8")));
+	            		arr.add(new String(finalizedurl.getBytes("UTF-8")));
 	            		//System.out.println(finalizedurl);
 	            	}
 	            }
@@ -126,15 +151,16 @@ public class DesktopCrawler implements Runnable{
 	                    	}catch(Exception e){
 	                    		e.printStackTrace();
 	                    	}
-	                    	if(!desk.visitedAlready.contains(url+file.getName())){
+	                    	if(!desk.visitedAlready.contains(url+"/"+file.getName())){
 	                    		synchronized(desk.lock){
-	                    			desk.visitedAlready.add(url+file.getName());
+	                    			desk.visitedAlready.add(url+"/"+file.getName());
+	                    			//System.out.println(url+"/"+file.getName());
 	                    		}
 	                    		JSONArray dataSet = ext.extract(file);
 
 		                        JSONObject metadata = ext.extractMeta(file);
 		                        
-		                        ext.exportJson(file, file.getName(), url+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
+		                        ext.exportJson(file, file.getName(), url+"/"+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
 		                        ext.indexTerms(db, file.toString().hashCode(), file);
 		                        System.out.println(desk.visitedAlready.size());
 	                    	}
@@ -168,12 +194,12 @@ public class DesktopCrawler implements Runnable{
 	        Extractor ext = new Extractor();
 	        File[] files = new File("C:/data/en").listFiles();
 	        
-	        DeskThreads desk = new DeskThreads(15, files, ext, "http://www.ctrlv.com/en");
+	        DeskThreads desk = new DeskThreads(10, files, ext, "http://www.ctrlv.com/en");
 	        desk.run();
 
 	        Ranking ranker = new Ranking(db);
 	        ranker.link_analysis();
-	        ranker.TFIDF("google");
+	        ranker.TFIDF("discovery");
 	    }
 
 	}
