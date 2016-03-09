@@ -33,12 +33,14 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
+import Homework.Threads.WebThreads;
+
 class Main{
 
     public static void main(String[] args) throws IOException {
 
         //Connects to the Mongo Database.
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        MongoClient mongoClient = new MongoClient("ec2-52-36-142-197.us-west-2.compute.amazonaws.com", 27017);
         DB db = null;
         DBCollection table = null;
 
@@ -72,7 +74,7 @@ class Main{
             db.getCollection("index").drop();
             
             final long startTime = System.currentTimeMillis();
-            WebThreads web = new WebThreads(5, u, Integer.parseInt(d), e);
+            WebThreads web = new WebThreads(30, u, Integer.parseInt(d), e);
             web.run();
 
             System.out.println("\nThe crawler has completed its run!");

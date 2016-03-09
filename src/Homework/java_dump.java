@@ -1,80 +1,57 @@
 package Homework;
 
-import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBList;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.ObjectWriter;
-
-import java.io.BufferedWriter;
-import java.io.File;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonWriter;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 
 public class java_dump
 {
-	public static List<DBObject> getList(DBCollection table)
-	{
-		List<DBObject> result = new ArrayList<DBObject>();
-		DBObject sample = new BasicDBObject();
-		DBObject removeID = new BasicDBObject("_id", 0);
-		
-		DBCursor cursor = table.find(sample, removeID);
-		
-		while(cursor.hasNext())
-		{
-			result.add(cursor.next());
-		}
-		
-		
-		return result;
-	}
-	
-    public void dumpFile(List<DBObject> result) throws IOException {
-        //List<DBObject> result = table.find().toArray();
-        
-        File file = new File("C:\\data\\dump_file.json");
-        
-        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-        
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectWriter writer2 = mapper.defaultPrettyPrintingWriter();
-
-        for(DBObject object : result)
+    public void dumpFile(DBCollection table) throws FileNotFoundException {
+        JsonArray jsonList = null;
+        DBCursor list = table.find();
+        while (list.hasNext())
         {
-        	writer.write(mapper.defaultPrettyPrintingWriter().writeValueAsString(object)+ ",");
-        	System.out.println(object.toString());
-        	
-        	
+            DBObject object = list.next();
+            jsonList = Json.createArrayBuilder().add(Json.createObjectBuilder()
+                    .add("name", (String)object.get("name"))
+                    .add("url", (String)object.get("url"))
+                    .add("metadata", (String)object.get("metadata"))
+                    .add("data", (String)object.get("data"))
+                    .add("path", (String)object.get("path")))
+                    .build();
         }
-        writer.flush();
-        writer.close();
+            JsonWriter writer = Json.createWriter(new FileOutputStream("C:\\data\\dump_file.json"));
+            writer.write(jsonList);
+            writer.close();
     }
-    public static void main(String[] args) throws IOException
-    {
-    	 MongoClient mongoClient = new MongoClient("localhost", 27017);
-         DB db = null;
-         DBCollection table = null;
+    
+    public static void main(String[] args){
+    	MongoClient mongoClient = new MongoClient("localhost", 27017);
+        DB db = null;
+        DBCollection table = null;
 
-         System.out.println("Establishing connection...");
+        System.out.println("Establishing connection...");
 
-         //Get the connection.
-         db = mongoClient.getDB("crawler");
-         table = db.getCollection("urlpages");
-         
-         java_dump test = new java_dump();
-         System.out.println("Connected to MongoDB!");
-         
-         List<DBObject> list = getList(table);
-         test.dumpFile(list);
-
+        //Get the connection.
+        db = mongoClient.getDB("crawler");
+        table = db.getCollection("urlpages");
+    	
+    	java_dump dump = new java_dump();
+    	try {
+			dump.dumpFile(table);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }

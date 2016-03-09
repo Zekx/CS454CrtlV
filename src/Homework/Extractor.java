@@ -2,6 +2,8 @@ package Homework;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -59,6 +61,36 @@ public class Extractor {
     		e.printStackTrace();
     	}
     }
+    
+    public String SHA256Converter(String str){
+		MessageDigest md;
+		StringBuffer SHA256String = null;
+		
+		try {
+			
+			md = MessageDigest.getInstance("SHA-256");
+			md.update(str.getBytes());
+			
+			byte byteData[] = md.digest();
+			
+	        StringBuffer buffer = new StringBuffer();
+	        for (int i = 0; i < byteData.length; i++) {
+	         buffer.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
+	        }
+	 
+	        SHA256String = new StringBuffer();
+	    	for (int i=0;i<byteData.length;i++) {
+	    		String hex=Integer.toHexString(0xff & byteData[i]);
+	   	     	if(hex.length()==1) SHA256String.append('0');
+	   	     	SHA256String.append(hex);
+	    	}
+			
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		
+		return SHA256String.toString();
+	}
 
     //This method extracts the specific document and outputs a set of string
     //Not sure if we should keep track of the count per word
@@ -145,17 +177,17 @@ public class Extractor {
         BasicDBObject doc = new BasicDBObject()
                 .append("name", name)
                 .append("url", url)
-                .append("hash", url.hashCode())
+                .append("hash", this.SHA256Converter(url))
                 .append("DocumentLength", dataSet.size())
                 .append("metadata", metadata)
-                .append("path", file.toString())
+                .append("path", file.getAbsolutePath())
                 .append("links", arr)
                 .append("# of links", arr.size());
 
         table.insert(doc);
     }
     
-    public void indexTerms(DB db, int urlHash, File file) throws InterruptedException{
+    public void indexTerms(DB db, String urlHash, File file) throws InterruptedException{
     	DBCollection table = db.getCollection("urlpages");
     	DBCollection index = db.getCollection("index");
     	documentWords = new CopyOnWriteArrayList<String>();
@@ -229,7 +261,7 @@ public class Extractor {
         				for(Object docu: arr){
         					BasicDBObject item = (BasicDBObject) docu;
         					
-        					if((int)item.get("docHash") == urlHash){     
+        					if( item.get("docHash").equals(urlHash)){     
         						int freq = Integer.parseInt(item.get("Frequency").toString()) + 1;
         						
             					innerDoc.put("Frequency", Integer.toString(freq));

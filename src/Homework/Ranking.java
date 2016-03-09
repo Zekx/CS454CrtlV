@@ -4,6 +4,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -230,8 +231,6 @@ public class Ranking {
 	
 
 	public void TFIDF ( String term ) {
-		System.out.println("Hello!");
-		
 		DBObject object = index.findOne(new BasicDBObject("word", term));
 		// Will go call the TF method to get the tf number for each document
 		BasicDBList docList = (BasicDBList) object.get("document"); // JSON Object now
@@ -311,7 +310,7 @@ public class Ranking {
 	
 	public static void main(String[] args){
 		//Connects to the Mongo Database.
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        MongoClient mongoClient = new MongoClient("ec2-52-36-142-197.us-west-2.compute.amazonaws.com", 27017);
 
         System.out.println("Establishing connection...");
 

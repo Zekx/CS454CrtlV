@@ -70,7 +70,7 @@ task fatJar(type: Jar){
     manifest{
         attributes 'Title': 'Gradle Jar Crawler',
                 'Implementation-Version': version,
-                'Main-Class': 'Homework.Main'
+                'Main-Class': 'Homework.DesktopCrawler'
     }
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }

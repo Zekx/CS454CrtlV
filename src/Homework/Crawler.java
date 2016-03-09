@@ -32,6 +32,8 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
+import Homework.Threads.WebThreads;
+
 public class Crawler implements Runnable{
 	WebThreads web;
     
@@ -69,19 +71,19 @@ public class Crawler implements Runnable{
                     
                     String htmlTitle = connection.maxBodySize(Integer.MAX_VALUE).get().title();
                 	
-                    File newHtmlFile = new File("C:/data/htmls/"+url.hashCode()+".html");
+                    File newHtmlFile = new File("C:/data/htmls/"+ext.SHA256Converter(url)+".html");
                     FileUtils.writeStringToFile(newHtmlFile, resp.body());
                     
                     //If -e is entered, then begin extraction here.
                     if(web.extract){
-                    	File file = new File("C:\\data\\htmls\\"+url.hashCode()+".html");
+                    	File file = new File("C:\\data\\htmls\\"+ext.SHA256Converter(url)+".html");
                     	
                     	JSONArray dataSet = ext.extract(file);
 
                         JSONObject metadata = ext.extractMeta(file);
                         
                         ext.exportJson(file, htmlTitle, url, dataSet, metadata, table, ext.getLinks(url, metadata.get("Content-Encoding").toString() ,file));
-                        ext.indexTerms(db, url.hashCode(), file);
+                        ext.indexTerms(db, ext.SHA256Converter(url), file);
                     }
                     
                     //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
