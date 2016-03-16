@@ -37,7 +37,7 @@ public class index_dump
     }
     public static void main(String[] args) throws IOException
     {
-    	 MongoClient mongoClient = new MongoClient("ec2-52-36-142-197.us-west-2.compute.amazonaws.com", 27017);
+    	 MongoClient mongoClient = new MongoClient("localhost", 27017);
          DB db = null;
          DBCollection table = null;
 

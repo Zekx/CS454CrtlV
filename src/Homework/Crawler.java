@@ -32,6 +32,7 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 
+import Homework.Index.Index;
 import Homework.Threads.WebThreads;
 
 public class Crawler implements Runnable{
@@ -41,7 +42,7 @@ public class Crawler implements Runnable{
     	this.web = wb;
     }
     
-    public List<String> readDoc(String url, Extractor ext, List<String> incoming, DB db, DBCollection table){
+    public List<String> readDoc(String url, Extractor ext, List<String> incoming, DB db, DBCollection table, Index mapper){
     	try{
     		if (!url.replace(" ", "").isEmpty()) {
                 Connection connection = Jsoup.connect(url);
@@ -83,7 +84,10 @@ public class Crawler implements Runnable{
                         JSONObject metadata = ext.extractMeta(file);
                         
                         ext.exportJson(file, htmlTitle, url, dataSet, metadata, table, ext.getLinks(url, metadata.get("Content-Encoding").toString() ,file));
-                        ext.indexTerms(db, ext.SHA256Converter(url), file);
+                        synchronized(web.lock){
+                        	ext.indexTerms(db, ext.SHA256Converter(url), file, web.mapper);
+                        }
+                        
                     }
                     
                     //System.out.println("ELEMENTS WITH IMG " + doc.getElementsByAttribute("src"));
@@ -138,7 +142,7 @@ public class Crawler implements Runnable{
 	            	}
 	                if(!web.visitedAlready.contains(url)){
 	                	System.out.println(url + " Tier:" + web.level + " current Tier Size:" + web.levelSize + " Current Total Size:" + web.goingToVisit.size());
-	                	incomingURL = this.readDoc(url, ext, incomingURL, db, table);
+	                	incomingURL = this.readDoc(url, ext, incomingURL, db, table, web.mapper);
 	                }
 	            } catch (Exception e) {
 	                System.out.println("\n following url page: " + url + " was unable to be read...\n");
@@ -162,6 +166,8 @@ public class Crawler implements Runnable{
 	                }
 	         }
         }
+	        
+	    web.mapper.insertDB(db);
     }
     
     

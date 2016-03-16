@@ -19,6 +19,8 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteResult;
 
+import Homework.Index.Index;
+
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.TeeContentHandler;
@@ -39,21 +41,22 @@ import org.xml.sax.SAXException;
  */
 public class Extractor {
     private ArrayList<String> stopWords;
-    private CopyOnWriteArrayList<String> documentWords;
     private JSONObject meta;
     
     public Extractor(){
     	stopWords = new ArrayList<String>();
     	
-    	File file = new File(".\\resources\\stopwords.txt");
+    	File file = new File("/CS454Search/resources/stopwords.txt");
     	try{
     		BufferedReader stream = new BufferedReader(new FileReader(file));
     		
     		String line = stream.readLine();
 
     	    while (line != null) {
-    	        stopWords.add(line);
-    	        line = stream.readLine();
+    	        if(!line.isEmpty() && !line.equals("")){
+    	        	stopWords.add(line);
+        	        line = stream.readLine();
+    	        }
     	    }
     		
     	    stream.close();
@@ -91,6 +94,24 @@ public class Extractor {
 		
 		return SHA256String.toString();
 	}
+    
+    public String extractString(File file)throws IOException, SAXException, TikaException{
+    	String body = "";
+    	try{
+            InputStream stream = new FileInputStream(file);
+            BodyContentHandler bodyHandler = new BodyContentHandler();
+            Metadata metadata = new Metadata();
+            new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
+          
+            //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
+            body = bodyHandler.toString();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    	
+    	return body;
+    }
 
     //This method extracts the specific document and outputs a set of string
     //Not sure if we should keep track of the count per word
@@ -100,7 +121,7 @@ public class Extractor {
         //I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
         try{
             InputStream stream = new FileInputStream(file);
-            BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
+            BodyContentHandler bodyHandler = new BodyContentHandler();
             Metadata metadata = new Metadata();
             new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
           
@@ -171,7 +192,7 @@ public class Extractor {
     	return arr;
     }
     //This extracts the information to a JSON file
-    public void exportJson(File file, String name, String url, JSONArray dataSet, JSONObject metadata, DBCollection table, JSONArray arr)
+    public synchronized void exportJson(File file, String name, String url, JSONArray dataSet, JSONObject metadata, DBCollection table, JSONArray arr)
     {
         //
         BasicDBObject doc = new BasicDBObject()
@@ -187,10 +208,36 @@ public class Extractor {
         table.insert(doc);
     }
     
-    public void indexTerms(DB db, String urlHash, File file) throws InterruptedException{
-    	DBCollection table = db.getCollection("urlpages");
+    public void Tokenize(String[] split, CopyOnWriteArrayList<String> documentWords){
+    	for(String s : split){
+        	if(s.contains("-")){
+        		documentWords.add(s.replaceAll("[^a-zA-Z-]+","").toLowerCase());
+            	String[] split2 = s.replaceAll("-", " ").split(" ");
+            	
+            	for(String t: split2){
+            		if(!t.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("") || !t.equals("-")) documentWords.add(t.replaceAll("[^a-zA-Z]+","").toLowerCase());
+            	}
+            }
+            else{
+            	if(s.contains(".")){
+            		if(!s.endsWith(".")){
+            			documentWords.add(s.replaceAll("[^a-zA-Z.//:]+","").toLowerCase());
+            		}
+            		else{
+            			documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+            		}
+            	}
+            	else{
+            		if(!s.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
+            	}
+            }
+
+        }
+    }
+    
+    public synchronized void indexTerms(DB db, String urlHash, File file, Index mapper) throws InterruptedException{
     	DBCollection index = db.getCollection("index");
-    	documentWords = new CopyOnWriteArrayList<String>();
+    	CopyOnWriteArrayList<String> documentWords = new CopyOnWriteArrayList<String>();
     	
     	//I heard wrapping the FileInputStream in BufferedInputStream is faster, idk if it actually is
         try{
@@ -198,126 +245,16 @@ public class Extractor {
             BodyContentHandler bodyHandler = new BodyContentHandler(1000000);
             Metadata metadata = new Metadata();
             new HtmlParser().parse(stream, bodyHandler, metadata, new ParseContext());
-            
-            int counter = 0;
+
             //System.out.println(bodyHandler.toString().replaceAll("\\s+"," "));
             String[] split = bodyHandler.toString().replaceAll("\\s+"," ").split(" ");
-            for(String s : split){
-            	if(s.contains("-")){
-                	String[] split2 = s.replaceAll("-", " ").split(" ");
-                	documentWords.add(s.replaceAll("[^a-zA-Z-]+","").toLowerCase());
-                	
-                	for(String t: split2){
-                		if(!t.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("") || !t.equals("-")) documentWords.add(t.replaceAll("[^a-zA-Z]+","").toLowerCase());
-                	}
-                }
-                else{
-                	if(s.contains(".")){
-                		if(!s.endsWith(".")){
-                			documentWords.add(s.replaceAll("[^a-zA-Z.//:]+","").toLowerCase());
-                		}
-                		else{
-                			documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
-                		}
-                	}
-                	else{
-                		if(!s.replaceAll("[^a-zA-Z]+","").toLowerCase().equals("")) documentWords.add(s.replaceAll("[^a-zA-Z]+","").toLowerCase());
-                	}
-                }
-
-            }
+            this.Tokenize(split, documentWords);
             Iterator<String> iter = documentWords.iterator();
             
-            while(iter.hasNext()){  
-            	String s = iter.next();
-        		if(!this.stopWords.contains(s)){
-        			if(index.findOne(new BasicDBObject("word",s.toString())) == null){
-        				JSONArray doc = new JSONArray();
-        				JSONObject innerDoc = new JSONObject();
-        				
-        				innerDoc.put("Frequency", 1);
-        				innerDoc.put("Positions", counter);
-        				innerDoc.put("docHash", urlHash);
-        				doc.add(innerDoc);
-        				
-        				BasicDBObject entry = new BasicDBObject()
-        					.append("word", s.toString())
-        					.append("document", doc);
-        				
-        				index.insert(entry);
-        			}
-        			else{
-        				DBObject entry = index.findOne(new BasicDBObject("word",s.toString()));
-        				
-        				BasicDBList doc = (BasicDBList) entry.get("document");
-        				JSONObject innerDoc = new JSONObject();
-        				Boolean docUpdate = false;
-        				
-        				CopyOnWriteArrayList<Object> arr = new CopyOnWriteArrayList<Object>();
-        				for(int i = 0; i < doc.size(); i++){
-        					arr.add(doc.get(i));
-        				}
-
-        				for(Object docu: arr){
-        					BasicDBObject item = (BasicDBObject) docu;
-        					
-        					if( item.get("docHash").equals(urlHash)){     
-        						int freq = Integer.parseInt(item.get("Frequency").toString()) + 1;
-        						
-            					innerDoc.put("Frequency", Integer.toString(freq));
-                				innerDoc.put("Positions", item.get("Positions") + " " + counter);
-                				innerDoc.put("docHash", urlHash);
-            					
-            					doc.remove(item);
-                				doc.add(innerDoc);
-                				
-                				BasicDBObject update = new BasicDBObject();
-            					update.put("$set", new BasicDBObject("word", s.toString()));
-            					update.put("$set", new BasicDBObject("document", doc));
-                				index.update(new BasicDBObject("word", s.toString()), update);
-                				docUpdate = true;
-            				}	       					
-        				}
-        				if(!docUpdate){
-        					innerDoc.put("Frequency", 1);
-            				innerDoc.put("Positions", counter);
-            				innerDoc.put("docHash", urlHash);
-        					
-            				doc.add(innerDoc);
-            				
-            				BasicDBObject update = new BasicDBObject();
-        					update.put("$set", new BasicDBObject("word", s.toString()));
-        					update.put("$set", new BasicDBObject("document", doc));
-            				
-            				index.update(new BasicDBObject("word", s.toString()), update);
-        				}
-        			}
-        		}
-        		
-        		counter++;
-            }
+            mapper.indexDoc(urlHash, stopWords, file);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) throws IOException, SAXException, TikaException
-    {
-//        //Connects to the Mongo Database.
-//        MongoClient mongoClient = new MongoClient("localhost", 27017);
-//        DB db = null;
-//        DBCollection table = null;
-//
-//        System.out.println("Establishing connection...");
-//
-//        //Get the connection.
-//        db = mongoClient.getDB("crawler");
-//        table = db.getCollection("urlpages");
-//
-//        File file = new File ("C:\\data\\htmls\\99 Homes - Movies & TV on Google Play.html");
-//        Extractor ext = new Extractor();
-
-
     }
 
 }

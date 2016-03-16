@@ -14,10 +14,12 @@ import com.mongodb.DB;
 import com.mongodb.DBCollection;
 
 import Homework.Crawler;
+import Homework.Index.Index;
 
 public class WebThreads implements Runnable{
 	public final Object lock = new Object();
 	private List<Thread> threads;
+	public Index mapper;
 	
 	public BlockingQueue<String> goingToVisit;
 	public Set<String> visitedAlready;
@@ -35,6 +37,7 @@ public class WebThreads implements Runnable{
     	this.height = d;
     	this.extract = e;
     	this.levelSize = 1;
+    	this.mapper = new Index();
     	
     	goingToVisit = new LinkedBlockingDeque<String>();
     	goingToVisit.add(this.url);
@@ -57,7 +60,6 @@ public class WebThreads implements Runnable{
 			threadsDone = true;
 			for(int i = 0; i < threads.size(); i++){
 				if(threads.get(i).isAlive()){
-					Thread.yield();
 					i = 0;
 					threadsDone = false;
 				}

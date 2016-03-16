@@ -11,6 +11,7 @@ import java.util.List;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectWriter;
 
+import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -54,9 +55,10 @@ public class rank_dump {
         writer.flush();
         writer.close();
     }
+    
     public static void main(String[] args) throws IOException
     {
-    	 MongoClient mongoClient = new MongoClient("ec2-52-36-142-197.us-west-2.compute.amazonaws.com", 27017);
+    	 MongoClient mongoClient = new MongoClient("localhost", 27017);
          DB db = null;
          DBCollection table = null;
          DBCollection table2 = null;
@@ -75,11 +77,6 @@ public class rank_dump {
          
          rank_dump test = new rank_dump();
          System.out.println("Connected to MongoDB!");
-         
-         
-         File file = new File("C:\\data\\dump_rank.json");
-         List<DBObject> list = getList(table);
-         test.rankFile(list, file);
 
          File file2 = new File("C:\\data\\page_rank.json");
          List<DBObject> list2 = getList(table2);

@@ -70,11 +70,8 @@ class Main{
                 }
             }
             
-            db.getCollection("urlpages").drop();
-            db.getCollection("index").drop();
-            
             final long startTime = System.currentTimeMillis();
-            WebThreads web = new WebThreads(30, u, Integer.parseInt(d), e);
+            WebThreads web = new WebThreads(4, u, Integer.parseInt(d), e);
             web.run();
 
             System.out.println("\nThe crawler has completed its run!");

@@ -25,6 +25,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.mongodb.BasicDBObject;
@@ -389,16 +391,19 @@ public class DesktopCrawler implements Runnable{
 	                    		synchronized(desk.lock){
 	                    			desk.visitedAlready.add(url+"/"+file.getName());
 	                    			//System.out.println(url+"/"+file.getName());
+	                    			JSONArray dataSet = ext.extract(file);
+	                    			JSONObject metadata = ext.extractMeta(file);
+	                    			
+	                    			if(table.findOne(new BasicDBObject("hash", ext.SHA256Converter(url+"/"+file.getName()))) == null){
+				                        synchronized(desk.lock){
+				                        	ext.exportJson(file, file.getName(), url+"/"+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
+				                        	ext.indexTerms(db, ext.SHA256Converter(url+"/"+file.getName()), file, desk.mapper);
+				                        	System.out.println( Thread.currentThread().toString()+ ": " + desk.visitedAlready.size());
+				                        }
+			                        }
 	                    		}
 	                    		
-	                    		JSONArray dataSet = ext.extract(file);
-		                        JSONObject metadata = ext.extractMeta(file);
-		                        if(table.findOne(new BasicDBObject("hash", ext.SHA256Converter(url+"/"+file.getName()))) == null){
-		                        	ext.exportJson(new File(url+"/"+file.getName()), file.getName(), url+"/"+file.getName(), dataSet, metadata, table, getLinks(url, metadata.get("Content-Encoding").toString() ,file));
-			                        ext.indexTerms(db, ext.SHA256Converter(url+"/"+file.getName()), file);
-		                        }
-		                        Thread.yield();
-		                        System.out.println( Thread.currentThread().toString()+ ": " + desk.visitedAlready.size());
+	                    		
 	                    	}
 	                    }
 
@@ -424,12 +429,12 @@ public class DesktopCrawler implements Runnable{
 	        Extractor ext = new Extractor();
 	        File[] files = new File("C:/data/en").listFiles();
 	        
-	        DeskThreads desk = new DeskThreads(30, files, ext, "C:/data/en");
+	        DeskThreads desk = new DeskThreads(4, files, ext, "http://www.ctrlv.com/en");
 	        desk.run();
+	        desk.mapper.insertDB(db);
 
 	        Ranking ranker = new Ranking(db);
 	        ranker.link_analysis();
-	        ranker.TFIDF("discovery");
 	    }
 
 	}

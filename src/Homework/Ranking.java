@@ -231,13 +231,14 @@ public class Ranking {
 	
 
 	public void TFIDF ( String term ) {
-		DBObject object = index.findOne(new BasicDBObject("word", term));
+		DBObject object = index.findOne(new BasicDBObject("word", term.toString()));
 		// Will go call the TF method to get the tf number for each document
 		BasicDBList docList = (BasicDBList) object.get("document"); // JSON Object now
 		
 		CopyOnWriteArrayList<Object> arr = new CopyOnWriteArrayList<Object>();
 		for(int i = 0; i < docList.size(); i++){
 			arr.add(docList.get(i));
+			System.out.println(docList.get(i));
 		}
 		
 		double tfNum,tfidfNum;
@@ -264,7 +265,6 @@ public class Ranking {
 		}
 		
 		Hashtable<String, Double> norTFIDF = normalize(hashList, tfidfValue);
-		
 		for (Object docu : arr) {
 			BasicDBObject obj = (BasicDBObject) docu;
 			JSONObject update = new JSONObject();
@@ -279,7 +279,6 @@ public class Ranking {
 			tfidfNum = tfNum * idfNum;*/
 			
 			update.put("Frequency", Integer.parseInt((obj.get("Frequency").toString())));
-			update.put("Positions", obj.get("Positions").toString());
 			update.put("docHash", obj.get("docHash").toString());
 			update.put("tfidf", norTFIDF.get(obj.get("docHash").toString()));
 			//System.out.println(obj.get("docHash") + ": " + tfidfNum);
@@ -288,8 +287,8 @@ public class Ranking {
 			docList.add(update);
 			
 			BasicDBObject updateColl = new BasicDBObject();
-			updateColl.put("$set", new BasicDBObject("word", term));
-			updateColl.put("$set", new BasicDBObject("document", docList));
+			updateColl.append("$set", new BasicDBObject("word", term));
+			updateColl.append("$set", new BasicDBObject("document", docList));
 			
 			index.update(new BasicDBObject("word", term), updateColl);
 		}
@@ -310,7 +309,7 @@ public class Ranking {
 	
 	public static void main(String[] args){
 		//Connects to the Mongo Database.
-        MongoClient mongoClient = new MongoClient("ec2-52-36-142-197.us-west-2.compute.amazonaws.com", 27017);
+        MongoClient mongoClient = new MongoClient("localhost", 27017);
 
         System.out.println("Establishing connection...");
 
@@ -323,7 +322,6 @@ public class Ranking {
         
         Ranking ranker = new Ranking(db);
         ranker.link_analysis();
-        ranker.TFIDF("irwin");
 		
         
 //        List<DBObject> result = new ArrayList<DBObject>();
