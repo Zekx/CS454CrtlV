@@ -208,6 +208,7 @@ public class Extractor {
         table.insert(doc);
     }
     
+
     public void Tokenize(String[] split, CopyOnWriteArrayList<String> documentWords){
     	for(String s : split){
         	if(s.contains("-")){

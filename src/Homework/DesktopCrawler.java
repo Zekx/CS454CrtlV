@@ -429,7 +429,7 @@ public class DesktopCrawler implements Runnable{
 	        Extractor ext = new Extractor();
 	        File[] files = new File("C:/data/en").listFiles();
 	        
-	        DeskThreads desk = new DeskThreads(4, files, ext, "http://www.ctrlv.com/en");
+	        DeskThreads desk = new DeskThreads(50, files, ext, "http://www.ctrlv.com/en");
 	        desk.run();
 	        desk.mapper.insertDB(db);
 

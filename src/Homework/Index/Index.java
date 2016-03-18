@@ -34,12 +34,12 @@ public class Index {
 		for(String s : split){
 			if(!stopWords.contains(s)){
 				if(s.contains("-")){
-					documentWords.add(s.replaceAll("[^a-zA-Z-]+", null).toLowerCase());
+					documentWords.add(s.replaceAll("[^a-zA-Z-]+", "").toLowerCase());
 					String[] split2 = s.split("-");
 					
 					for(String t: split2){
 						if(!t.isEmpty()){
-							documentWords.add(t.replaceAll("[^a-zA-Z]+", null).toLowerCase());
+							documentWords.add(t.replaceAll("[^a-zA-Z]+", "").toLowerCase());
 						}
 					}
 				}
@@ -49,11 +49,11 @@ public class Index {
 						
 						for(String t: split2){
 							if(t.length() > 2){
-								documentWords.add(t.replaceAll("[^a-zA-Z]+", null).toLowerCase());
+								documentWords.add(t.replaceAll("[^a-zA-Z]+", "").toLowerCase());
 							}
 						}
 					}else{
-						documentWords.add(s.replaceAll("[^a-zA-Z]+", null).toLowerCase());
+						documentWords.add(s.replaceAll("[^a-zA-Z]+", "").toLowerCase());
 					}
 				}
 			}	

@@ -175,7 +175,9 @@ public class Crawler implements Runnable{
     // for the downloadImage method
     private static void downloadImage(String url, String imgSrc) throws IOException {
         BufferedImage image = null;
+        DBCollection table = (new MongoClient("localhost", 27017).getDB("crawler")).getCollection("images");        
         try {
+        	Image img = new Image();
             if (!(imgSrc.startsWith("http"))) {
             	if(imgSrc.startsWith("/")) {
                     url = url + imgSrc;            		
@@ -197,10 +199,12 @@ public class Crawler implements Runnable{
             if (image != null) {
                 File file = new File(imgPath);
                 ImageIO.write(image, imageFormat, file);
+                img.uploadImage(file, url, table);
             }
+            
         } catch (Exception ex) {
             
         }
-
+        
     }
 }
