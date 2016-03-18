@@ -56,15 +56,18 @@ public class ImageAnalysis {
 		MongoCollection<Document> inventory = db.getCollection("images");
 
 		List<Document> list = new ArrayList<Document>();
-		
+		List<Document> result = new ArrayList<Document>();
 		inventory.find(
 				Filters.and(
 						Filters.eq("width", image.getWidth()), 
 						Filters.eq("height", image.getHeight()))).into(list);
-		System.out.println(list.size());
+						
 		for(int i = 0; i < list.size(); i ++)
 		{
-			System.out.println(list.get(i));
+			if((compare(image, new Image(new File(list.get(i).get("path").toString()))) <= 0.6))
+			{
+				result.add(list.get(i));
+			}
 		}
 		return list;
 	}
