@@ -6,8 +6,6 @@ import java.io.FileInputStream;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -97,8 +95,10 @@ public class Image {
 	//This also uploads to database
 	public void uploadImage(File file, String url, DBCollection table)
 	{
+		/* This method uploads image metadata to the database
+		 * 
+		 */
 		BufferedImage img = null;
-		JsonObjectBuilder jsonLocation = Json.createObjectBuilder();
 		int width, height;
 		String filePath, fileName;
 		try
@@ -109,33 +109,17 @@ public class Image {
 			height = img.getHeight();
 			filePath = file.getPath();
 			fileName = file.getName();
-			colors = new HashMap<String, RGB>();
-			for(int w = 0; w < width; w ++)
-			{
-				for(int h = 0; h < height; h ++)
-				{
-					JsonObjectBuilder jsonColor = Json.createObjectBuilder();
-
-					int rgb = img.getRGB(w, h);
-					colors.put(w + ":" + h, 
-							new RGB((rgb >> 16) & 0x000000FF,
-									(rgb >> 8) & 0x000000FF,
-									(rgb) & 0x000000FF));
-					jsonColor.add("red", (rgb >> 16) & 0x000000FF)
-					.add("green",(rgb >> 8) & 0x000000FF)
-					.add("blue", (rgb) & 0x000000FF).build();
-					
-					jsonLocation.add(w+":"+h, jsonColor);
-				}
-			}
+			
+			System.out.println("Name: " + fileName + 
+					"\nPath: " + filePath +
+					"\nWidth x Height: " + width + " x " + height);
 			
 			DBObject image = new BasicDBObject()
 					.append("name", fileName)
 					.append("url", url)
 					.append("path", filePath)
 					.append("width", width)
-					.append("height", height)
-					.append("color", jsonLocation);
+					.append("height", height);
 			table.insert(image);
 			
 		}
