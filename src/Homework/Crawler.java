@@ -133,6 +133,9 @@ public class Crawler implements Runnable{
 
         System.out.println("Connected to MongoDB!");
 	        while (web.level <= web.height) {
+	        	if(web.goingToVisit.size() == 0){
+	            		break;
+	            	}
 	        	String url = web.goingToVisit.poll();
 	
 	            try {
