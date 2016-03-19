@@ -196,7 +196,7 @@ public class Crawler implements Runnable{
             imgPath = "C:/data/images/" + imagename.hashCode() + "." + imageFormat + "";
             URL imageUrl = new URL(url);
             image = ImageIO.read(imageUrl);
-            if (image != null) {
+            if (image != null && !(new File(imgPath)).exists()) {
                 File file = new File(imgPath);
                 ImageIO.write(image, imageFormat, file);
                 img.uploadImage(file, url, table);

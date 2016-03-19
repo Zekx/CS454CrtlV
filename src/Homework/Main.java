@@ -40,7 +40,7 @@ class Main{
     public static void main(String[] args) throws IOException {
 
         //Connects to the Mongo Database.
-        MongoClient mongoClient = new MongoClient("localhost", 27017);
+        MongoClient mongoClient = new MongoClient("127.0.0.1", 27017);
         DB db = null;
         DBCollection table = null;
 
