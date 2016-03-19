@@ -98,10 +98,10 @@ public class Crawler implements Runnable{
                     for(int i = 0; i < imgs.size(); i++) {
                     	String src = imgs.get(i).attributes().get("src");
                     	if (!src.startsWith("http")) {
-                    	downloadImage(baseUrl, src);
+                    	downloadImage(baseUrl, src, ext);
                     	} else {
                     		if (src.contains(baseUrl)) {
-                    			downloadImage(baseUrl, src);
+                    			downloadImage(baseUrl, src, ext);
                     		}
                     	}
                     	
@@ -173,7 +173,7 @@ public class Crawler implements Runnable{
     
     // Credits to http://www.compiletimeerror.com/2013/08/java-downloadextract-all-images-from.html#.Vr6KyObpxfY 
     // for the downloadImage method
-    private static void downloadImage(String url, String imgSrc) throws IOException {
+    private static void downloadImage(String url, String imgSrc, Extractor ext) throws IOException {
         BufferedImage image = null;
         DBCollection table = (new MongoClient("localhost", 27017).getDB("crawler")).getCollection("images");        
         try {
@@ -193,7 +193,7 @@ public class Crawler implements Runnable{
             imageFormat = imgSrc.substring(imgSrc.lastIndexOf(".") + 1);
             String imagename = imgSrc.substring(0, imgSrc.lastIndexOf("."));
             String imgPath = null;
-            imgPath = "C:/data/images/" + imagename.hashCode() + "." + imageFormat + "";
+            imgPath = "C:/data/images/" + ext.SHA256Converter(url) + "." + imageFormat + "";
             URL imageUrl = new URL(url);
             image = ImageIO.read(imageUrl);
             if (image != null && !(new File(imgPath)).exists()) {

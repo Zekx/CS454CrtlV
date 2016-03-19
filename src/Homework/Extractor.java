@@ -46,7 +46,7 @@ public class Extractor {
     public Extractor(){
     	stopWords = new ArrayList<String>();
     	
-    	File file = new File("/CS454Search/resources/stopwords.txt");
+    	File file = new File("./resources/stopwords.txt");
     	try{
     		BufferedReader stream = new BufferedReader(new FileReader(file));
     		
@@ -54,9 +54,10 @@ public class Extractor {
 
     	    while (line != null) {
     	        if(!line.isEmpty() && !line.equals("")){
+    	        	System.out.println(line);
     	        	stopWords.add(line);
-        	        line = stream.readLine();
     	        }
+    	        line = stream.readLine();
     	    }
     		
     	    stream.close();
